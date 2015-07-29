@@ -1,0 +1,17 @@
+{
+  "name": "purescript-coroutines",
+  "moduleType": [
+    "node"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "output"
+  ],
+  "dependencies": {
+    "purescript-either": "~0.2.0",
+    "purescript-transformers": "~0.6.1",
+    "purescript-tailrec": "~0.3.0"
+  }
+}
