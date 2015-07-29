@@ -1,6 +1,7 @@
 # purescript-coroutines
 
-- [Module Documentation](docs/Control/Coroutine.purs)
+- [Module Documentation](docs/Control/Coroutine.md)
+- [Example](test/Main.purs)
 
 ## Usage
 
