@@ -1,5 +1,7 @@
 # purescript-coroutines
 
+[![Pursuit](http://pursuit.purescript.org/packages/purescript-coroutines/badge)](http://pursuit.purescript.org/packages/purescript-coroutines/)
+
 - [Module Documentation](docs/Control/Coroutine.md)
 - [Example](test/Main.purs)
 
