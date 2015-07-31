@@ -22,7 +22,7 @@ printer = forever do
   s <- await
   lift (log s)
     
-showing :: forall m. (Monad m) => Transformer Int String m Unit
+showing :: forall a m. (Show a, Monad m) => Transformer a String m Unit
 showing = forever (transform show)
 
 main = runProcess (nats $~ showing $$ printer)
