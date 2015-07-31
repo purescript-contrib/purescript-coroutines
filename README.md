@@ -20,6 +20,8 @@ The basic building block is the coroutine type `Co`, which exhibits different be
 - When `f` is the `Await i` functor, the coroutine waits for an input of type `i`
 - When `f` is the `Transform i o` functor, the coroutine waits for an input of type `i`, and emits an output of type `o`
 
+See the article "Coroutine Pipelines" in _The Monad Reader, Issue 19_ for more details.
+
 Using these building blocks, we can create some standard coroutines, which can form pipelines.
 
 Here is a coroutine which generates the natural numbers in order:
