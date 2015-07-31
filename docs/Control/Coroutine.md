@@ -8,8 +8,7 @@ fork, join, or any combination.
 #### `Co`
 
 ``` purescript
-newtype Co f m a
-  = Co (Unit -> m (Either a (f (Co f m a))))
+data Co f m a
 ```
 
 A coroutine whose commands are given by the functor `f`, with side effects
@@ -24,14 +23,6 @@ instance bindCo :: (Functor f, Monad m) => Bind (Co f m)
 instance monadCo :: (Functor f, Monad m) => Monad (Co f m)
 instance monadTransCo :: (Functor f) => MonadTrans (Co f)
 ```
-
-#### `unCo`
-
-``` purescript
-unCo :: forall f m a. Co f m a -> m (Either a (f (Co f m a)))
-```
-
-Unpack a `Co`, exposing the first step of the computation.
 
 #### `Process`
 
@@ -100,7 +91,7 @@ Run a `Process` to completion.
 #### `fuse`
 
 ``` purescript
-fuse :: forall f g m a. (Monad m) => (forall a b c. (a -> b -> c) -> f a -> g b -> c) -> Co f m a -> Co g m a -> Process m a
+fuse :: forall f g m a. (Functor f, Functor g, MonadRec m) => (forall a b c. (a -> b -> c) -> f a -> g b -> c) -> Co f m a -> Co g m a -> Process m a
 ```
 
 Fuse two `Co`routines.
@@ -176,7 +167,7 @@ Fuse the `Emit` and `Await` functors.
 #### `feed`
 
 ``` purescript
-feed :: forall e m a. (Monad m) => Producer e m a -> Consumer e m a -> Process m a
+feed :: forall e m a. (MonadRec m) => Producer e m a -> Consumer e m a -> Process m a
 ```
 
 Feed the values produced by a producer into a consumer.
@@ -184,7 +175,7 @@ Feed the values produced by a producer into a consumer.
 #### `(>~>)`
 
 ``` purescript
-(>~>) :: forall e m a. (Monad m) => Producer e m a -> Consumer e m a -> Process m a
+(>~>) :: forall e m a. (MonadRec m) => Producer e m a -> Consumer e m a -> Process m a
 ```
 
 _left-associative / precedence -1_
@@ -194,7 +185,7 @@ Infix version of `feed`.
 #### `(<~<)`
 
 ``` purescript
-(<~<) :: forall e m a. (Monad m) => Consumer e m a -> Producer e m a -> Process m a
+(<~<) :: forall e m a. (MonadRec m) => Consumer e m a -> Producer e m a -> Process m a
 ```
 
 _left-associative / precedence -1_
