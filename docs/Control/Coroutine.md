@@ -73,29 +73,10 @@ runProcess :: forall m a. (MonadRec m) => Process m a -> m a
 
 Run a `Process` to completion.
 
-#### `Fuse`
+#### `fuseWith`
 
 ``` purescript
-class Fuse f g h where
-  zap :: forall a b c. (a -> b -> c) -> f a -> g b -> h c
-```
-
-`Fuse` identifies functors which can be fused together.
-
-This operation can be used to build pipelines of coroutines by fusing steps defined by different functors.
-
-##### Instances
-``` purescript
-instance fuseEmitAwait :: Fuse (Emit e) (Await e) Identity
-instance fuseEmitTransform :: Fuse (Emit i) (Transform i o) (Emit o)
-instance fuseTransformAwait :: Fuse (Transform i o) (Await o) (Await i)
-instance fuseTransformTransform :: Fuse (Transform i j) (Transform j k) (Transform i k)
-```
-
-#### `fuse`
-
-``` purescript
-fuse :: forall f g h m a. (Functor f, Functor g, Functor h, Fuse f g h, MonadRec m) => Co f m a -> Co g m a -> Co h m a
+fuseWith :: forall f g h m a. (Functor f, Functor g, Functor h, MonadRec m) => (forall a b c. (a -> b -> c) -> f a -> g b -> h c) -> Co f m a -> Co g m a -> Co h m a
 ```
 
 Fuse two `Co`routines.
@@ -111,8 +92,6 @@ A generating functor for emitting output values.
 
 ##### Instances
 ``` purescript
-instance fuseEmitAwait :: Fuse (Emit e) (Await e) Identity
-instance fuseEmitTransform :: Fuse (Emit i) (Transform i o) (Emit o)
 instance functorEmit :: Functor (Emit o)
 ```
 
@@ -143,8 +122,6 @@ A generating functor for awaiting input values.
 
 ##### Instances
 ``` purescript
-instance fuseEmitAwait :: Fuse (Emit e) (Await e) Identity
-instance fuseTransformAwait :: Fuse (Transform i o) (Await o) (Await i)
 instance functorAwait :: Functor (Await i)
 ```
 
@@ -175,9 +152,6 @@ A generating functor for transforming input values into output values.
 
 ##### Instances
 ``` purescript
-instance fuseEmitTransform :: Fuse (Emit i) (Transform i o) (Emit o)
-instance fuseTransformAwait :: Fuse (Transform i o) (Await o) (Await i)
-instance fuseTransformTransform :: Fuse (Transform i j) (Transform j k) (Transform i k)
 instance functorTransform :: Functor (Transform i o)
 ```
 

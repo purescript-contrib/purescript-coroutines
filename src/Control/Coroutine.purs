@@ -8,7 +8,7 @@ module Control.Coroutine
   , hoistCo, liftCo
   , loop
   , runCo, runProcess
-  , Fuse, zap, fuse
+  , fuseWith
   , Emit(..), Producer(), emit
   , Await(..), Consumer(), await
   , Transform(..), Transformer(), transform
@@ -113,27 +113,13 @@ runCo interp = tailRecM (go <=< resume)
 runProcess :: forall m a. (MonadRec m) => Process m a -> m a
 runProcess = runCo (return <<< runIdentity)
 
--- | `Fuse` identifies functors which can be fused together.
--- |
--- | This operation can be used to build pipelines of coroutines by fusing steps defined by different functors.
-class Fuse f g h where
-  zap :: forall a b c. (a -> b -> c) -> f a -> g b -> h c
-
-instance fuseEmitAwait :: Fuse (Emit e) (Await e) Identity where
-  zap f (Emit e a) (Await c) = Identity (f a (c e))
-
-instance fuseEmitTransform :: Fuse (Emit i) (Transform i o) (Emit o) where
-  zap f (Emit i a) (Transform t) = case t i of Tuple o b -> Emit o (f a b) 
-
-instance fuseTransformAwait :: Fuse (Transform i o) (Await o) (Await i) where
-  zap f (Transform t) (Await g) = Await \i -> case t i of Tuple o a -> f a (g o) 
-
-instance fuseTransformTransform :: Fuse (Transform i j) (Transform j k) (Transform i k) where
-  zap f (Transform g) (Transform h) = Transform \i -> case g i of Tuple j a -> case h j of Tuple k b -> Tuple k (f a b)
-
 -- | Fuse two `Co`routines.
-fuse :: forall f g h m a. (Functor f, Functor g, Functor h, Fuse f g h, MonadRec m) => Co f m a -> Co g m a -> Co h m a
-fuse fs gs = Co \_ -> go (Tuple fs gs)
+fuseWith :: forall f g h m a. (Functor f, Functor g, Functor h, MonadRec m) =>
+                              (forall a b c. (a -> b -> c) -> f a -> g b -> h c) -> 
+                              Co f m a -> 
+                              Co g m a -> 
+                              Co h m a
+fuseWith zap fs gs = Co \_ -> go (Tuple fs gs)
   where
   go :: Tuple (Co f m a) (Co g m a) -> m (Either a (h (Co h m a)))
   go (Tuple fs gs) = do
@@ -181,19 +167,19 @@ type Transformer i o = Co (Transform i o)
 -- | Transform input values.
 transform :: forall m i o. (Monad m) => (i -> o) -> Transformer i o m Unit
 transform f = liftCo (Transform \i -> Tuple (f i) unit)
-      
+        
 -- | Connect a producer and a consumer.
 ($$) :: forall o m a. (MonadRec m) => Producer o m a -> Consumer o m a -> Process m a
-($$) = fuse
+($$) = fuseWith \f (Emit e a) (Await c) -> Identity (f a (c e))
 
 -- | Transform a producer.
 ($~) :: forall i o m a. (MonadRec m) => Producer i m a -> Transformer i o m a -> Producer o m a
-($~) = fuse
+($~) = fuseWith \f (Emit i a) (Transform t) -> case t i of Tuple o b -> Emit o (f a b) 
 
 -- | Transform a consumer.
 (~$) :: forall i o m a. (MonadRec m) => Transformer i o m a -> Consumer o m a -> Consumer i m a
-(~$) = fuse
+(~$) = fuseWith \f (Transform t) (Await g) -> Await \i -> case t i of Tuple o a -> f a (g o) 
 
 -- | Compose transformers
 (~~) :: forall i j k m a. (MonadRec m) => Transformer i j m a -> Transformer j k m a -> Transformer i k m a
-(~~) = fuse
+(~~) = fuseWith \f (Transform g) (Transform h) -> Transform \i -> case g i of Tuple j a -> case h j of Tuple k b -> Tuple k (f a b)
