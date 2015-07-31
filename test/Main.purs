@@ -13,13 +13,10 @@ producer :: forall m a. (Monad m) => Producer Int m Unit
 producer = stateful inc 0
   where
   inc i = do
-    emit i
     return (Right (i + 1))
-
--- | We hoist the consumer with `Aff`'s `later` function
--- | to make sure we don't run out of stack.
+    
 consumer :: forall a. Consumer Int (Aff _) Unit
-consumer = hoistCo later $ repeatedly do
+consumer = repeatedly do
   s <- await
   lift (print s)
 
