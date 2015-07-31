@@ -22,6 +22,7 @@ instance applicativeCo :: (Functor f, Monad m) => Applicative (Co f m)
 instance bindCo :: (Functor f, Monad m) => Bind (Co f m)
 instance monadCo :: (Functor f, Monad m) => Monad (Co f m)
 instance monadTransCo :: (Functor f) => MonadTrans (Co f)
+instance monadRecCo :: (Functor f, Monad m) => MonadRec (Co f m)
 ```
 
 #### `Process`
@@ -40,14 +41,6 @@ hoistCo :: forall f m n a. (Functor f, Functor n) => (forall a. m a -> n a) -> C
 
 Change the underlying `Monad` for a `Co`routine.
 
-#### `stateful`
-
-``` purescript
-stateful :: forall f m a s. (Functor f, Monad m) => (s -> Co f m (Either a s)) -> s -> Co f m a
-```
-
-Construct a `Co`routine from a stateful updater function.
-
 #### `loop`
 
 ``` purescript
@@ -55,14 +48,6 @@ loop :: forall f m a b. (Functor f, Monad m) => Co f m (Maybe a) -> Co f m a
 ```
 
 Loop until the computation returns a `Just`.
-
-#### `repeatedly`
-
-``` purescript
-repeatedly :: forall f m a b. (Functor f, Monad m) => Co f m a -> Co f m b
-```
-
-Loop indefinitely.
 
 #### `liftCo`
 
@@ -88,10 +73,29 @@ runProcess :: forall m a. (MonadRec m) => Process m a -> m a
 
 Run a `Process` to completion.
 
+#### `Fuse`
+
+``` purescript
+class Fuse f g h where
+  zap :: forall a b c. (a -> b -> c) -> f a -> g b -> h c
+```
+
+`Fuse` identifies functors which can be fused together.
+
+This operation can be used to build pipelines of coroutines by fusing steps defined by different functors.
+
+##### Instances
+``` purescript
+instance fuseEmitAwait :: Fuse (Emit e) (Await e) Identity
+instance fuseEmitTransform :: Fuse (Emit i) (Transform i o) (Emit o)
+instance fuseTransformAwait :: Fuse (Transform i o) (Await o) (Await i)
+instance fuseTransformTransform :: Fuse (Transform i j) (Transform j k) (Transform i k)
+```
+
 #### `fuse`
 
 ``` purescript
-fuse :: forall f g m a. (Functor f, Functor g, MonadRec m) => (forall a b c. (a -> b -> c) -> f a -> g b -> c) -> Co f m a -> Co g m a -> Process m a
+fuse :: forall f g h m a. (Functor f, Functor g, Functor h, Fuse f g h, MonadRec m) => Co f m a -> Co g m a -> Co h m a
 ```
 
 Fuse two `Co`routines.
@@ -107,6 +111,8 @@ A generating functor for emitting output values.
 
 ##### Instances
 ``` purescript
+instance fuseEmitAwait :: Fuse (Emit e) (Await e) Identity
+instance fuseEmitTransform :: Fuse (Emit i) (Transform i o) (Emit o)
 instance functorEmit :: Functor (Emit o)
 ```
 
@@ -137,6 +143,8 @@ A generating functor for awaiting input values.
 
 ##### Instances
 ``` purescript
+instance fuseEmitAwait :: Fuse (Emit e) (Await e) Identity
+instance fuseTransformAwait :: Fuse (Transform i o) (Await o) (Await i)
 instance functorAwait :: Functor (Await i)
 ```
 
@@ -156,40 +164,77 @@ await :: forall m i. (Monad m) => Consumer i m i
 
 Await an input value.
 
-#### `emitAwait`
+#### `Transform`
 
 ``` purescript
-emitAwait :: forall e a b c. (a -> b -> c) -> Emit e a -> Await e b -> c
+newtype Transform i o a
+  = Transform (i -> Tuple o a)
 ```
 
-Fuse the `Emit` and `Await` functors.
+A generating functor for transforming input values into output values.
 
-#### `feed`
-
+##### Instances
 ``` purescript
-feed :: forall e m a. (MonadRec m) => Producer e m a -> Consumer e m a -> Process m a
+instance fuseEmitTransform :: Fuse (Emit i) (Transform i o) (Emit o)
+instance fuseTransformAwait :: Fuse (Transform i o) (Await o) (Await i)
+instance fuseTransformTransform :: Fuse (Transform i j) (Transform j k) (Transform i k)
+instance functorTransform :: Functor (Transform i o)
 ```
 
-Feed the values produced by a producer into a consumer.
-
-#### `(>~>)`
+#### `Transformer`
 
 ``` purescript
-(>~>) :: forall e m a. (MonadRec m) => Producer e m a -> Consumer e m a -> Process m a
+type Transformer i o = Co (Transform i o)
+```
+
+A type synonym for a `Co`routine which transforms values.
+
+#### `transform`
+
+``` purescript
+transform :: forall m i o. (Monad m) => (i -> o) -> Transformer i o m Unit
+```
+
+Transform input values.
+
+#### `($$)`
+
+``` purescript
+($$) :: forall o m a. (MonadRec m) => Producer o m a -> Consumer o m a -> Process m a
 ```
 
 _left-associative / precedence -1_
 
-Infix version of `feed`.
+Connect a producer and a consumer.
 
-#### `(<~<)`
+#### `($~)`
 
 ``` purescript
-(<~<) :: forall e m a. (MonadRec m) => Consumer e m a -> Producer e m a -> Process m a
+($~) :: forall i o m a. (MonadRec m) => Producer i m a -> Transformer i o m a -> Producer o m a
 ```
 
 _left-associative / precedence -1_
 
-Infix version of `flip feed`.
+Transform a producer.
+
+#### `(~$)`
+
+``` purescript
+(~$) :: forall i o m a. (MonadRec m) => Transformer i o m a -> Consumer o m a -> Consumer i m a
+```
+
+_left-associative / precedence -1_
+
+Transform a consumer.
+
+#### `(~~)`
+
+``` purescript
+(~~) :: forall i j k m a. (MonadRec m) => Transformer i j m a -> Transformer j k m a -> Transformer i k m a
+```
+
+_left-associative / precedence -1_
+
+Compose transformers
 
 

@@ -4,26 +4,15 @@
 -- | fork, join, or any combination.
 
 module Control.Coroutine
-  ( Co()
-  , Process()
-  , hoistCo
-  , stateful
+  ( Co(), Process()
+  , hoistCo, liftCo
   , loop
-  , repeatedly
-  , liftCo
-  , runCo
-  , runProcess
-  ,fuse
-  , Emit(..)
-  , Producer()
-  , emit
-  , Await(..)
-  , Consumer()
-  , await
-  , emitAwait
-  , feed
-  , (>~>)
-  , (<~<)
+  , runCo, runProcess
+  , Fuse, zap, fuse
+  , Emit(..), Producer(), emit
+  , Await(..), Consumer(), await
+  , Transform(..), Transformer(), transform
+  , ($$), ($~), (~$), (~~)
   ) where
       
 import Prelude
@@ -88,29 +77,23 @@ instance monadCo :: (Functor f, Monad m) => Monad (Co f m)
 instance monadTransCo :: (Functor f) => MonadTrans (Co f) where
   lift ma = Co \_ -> map Left ma
 
+instance monadRecCo :: (Functor f, Monad m) => MonadRec (Co f m) where
+  tailRecM f = go
+    where
+    go s = do
+      e <- f s
+      case e of
+        Left s1 -> go s1
+        Right a -> return a
+
 -- | Change the underlying `Monad` for a `Co`routine.
 hoistCo :: forall f m n a. (Functor f, Functor n) => (forall a. m a -> n a) -> Co f m a -> Co f n a
 hoistCo n (Co m) = Co \_ -> map (map (hoistCo n)) <$> n (m unit)
 hoistCo n (Bind e) = runExists (\(Bound a f) -> bound (hoistCo n <<< a) (hoistCo n <<< f)) e
-
--- | Construct a `Co`routine from a stateful updater function.
-stateful :: forall f m a s. (Functor f, Monad m) => (s -> Co f m (Either a s)) -> s -> Co f m a
-stateful f = go
-  where
-  go :: s -> Co f m a
-  go s = do
-    e <- f s
-    case e of
-      Left a -> return a
-      Right s1 -> go s1
   
 -- | Loop until the computation returns a `Just`.
 loop :: forall f m a b. (Functor f, Monad m) => Co f m (Maybe a) -> Co f m a
-loop me = stateful (\_ -> map (maybe (Right unit) Left) me) unit
-
--- | Loop indefinitely.
-repeatedly :: forall f m a b. (Functor f, Monad m) => Co f m a -> Co f m b
-repeatedly = loop <<< map (const Nothing)
+loop me = tailRecM (\_ -> map (maybe (Left unit) Right) me) unit
     
 -- | Lift a command from the functor `f` into a one-step `Co`routine.
 liftCo :: forall f m a. (Functor f, Monad m) => f a -> Co f m a
@@ -130,21 +113,35 @@ runCo interp = tailRecM (go <=< resume)
 runProcess :: forall m a. (MonadRec m) => Process m a -> m a
 runProcess = runCo (return <<< runIdentity)
 
+-- | `Fuse` identifies functors which can be fused together.
+-- |
+-- | This operation can be used to build pipelines of coroutines by fusing steps defined by different functors.
+class Fuse f g h where
+  zap :: forall a b c. (a -> b -> c) -> f a -> g b -> h c
+
+instance fuseEmitAwait :: Fuse (Emit e) (Await e) Identity where
+  zap f (Emit e a) (Await c) = Identity (f a (c e))
+
+instance fuseEmitTransform :: Fuse (Emit i) (Transform i o) (Emit o) where
+  zap f (Emit i a) (Transform t) = case t i of Tuple o b -> Emit o (f a b) 
+
+instance fuseTransformAwait :: Fuse (Transform i o) (Await o) (Await i) where
+  zap f (Transform t) (Await g) = Await \i -> case t i of Tuple o a -> f a (g o) 
+
+instance fuseTransformTransform :: Fuse (Transform i j) (Transform j k) (Transform i k) where
+  zap f (Transform g) (Transform h) = Transform \i -> case g i of Tuple j a -> case h j of Tuple k b -> Tuple k (f a b)
+
 -- | Fuse two `Co`routines.
-fuse :: forall f g m a. (Functor f, Functor g, MonadRec m) => 
-                        (forall a b c. (a -> b -> c) -> f a -> g b -> c) -> 
-                        Co f m a -> 
-                        Co g m a -> 
-                        Process m a
-fuse zap fs gs = Co \_ -> tailRecM2 go fs gs
+fuse :: forall f g h m a. (Functor f, Functor g, Functor h, Fuse f g h, MonadRec m) => Co f m a -> Co g m a -> Co h m a
+fuse fs gs = Co \_ -> go (Tuple fs gs)
   where
-  go :: Co f m a -> Co g m a -> m (Either { a :: Co f m a, b :: Co g m a } _)
-  go fs gs = do
+  go :: Tuple (Co f m a) (Co g m a) -> m (Either a (h (Co h m a)))
+  go (Tuple fs gs) = do
     e1 <- resume fs
     e2 <- resume gs
-    case { a: _, b: _ } <$> e1 <*> e2 of
-      Left a -> return (Right (Left a))
-      Right o -> return (Left (zap { a: _, b: _ } o.a o.b))
+    case zap Tuple <$> e1 <*> e2 of
+      Left a -> return (Left a)
+      Right o -> return (Right (map (\t -> Co \_ -> go t) o))
 
 -- | A generating functor for emitting output values.
 data Emit o a = Emit o a
@@ -172,18 +169,31 @@ type Consumer i = Co (Await i)
 await :: forall m i. (Monad m) => Consumer i m i
 await = liftCo (Await id)
 
--- | Fuse the `Emit` and `Await` functors.
-emitAwait :: forall e a b c. (a -> b -> c) -> Emit e a -> Await e b -> c
-emitAwait f (Emit e a) (Await c) = f a (c e)
+-- | A generating functor for transforming input values into output values.
+newtype Transform i o a = Transform (i -> Tuple o a)
 
--- | Feed the values produced by a producer into a consumer.
-feed :: forall e m a. (MonadRec m) => Producer e m a -> Consumer e m a -> Process m a 
-feed = fuse emitAwait
+instance functorTransform :: Functor (Transform i o) where
+  map f (Transform k) = Transform (map f <<< k)
+  
+-- | A type synonym for a `Co`routine which transforms values.
+type Transformer i o = Co (Transform i o)
 
--- | Infix version of `feed`.
-(>~>) :: forall e m a. (MonadRec m) => Producer e m a -> Consumer e m a -> Process m a 
-(>~>) = feed
+-- | Transform input values.
+transform :: forall m i o. (Monad m) => (i -> o) -> Transformer i o m Unit
+transform f = liftCo (Transform \i -> Tuple (f i) unit)
+      
+-- | Connect a producer and a consumer.
+($$) :: forall o m a. (MonadRec m) => Producer o m a -> Consumer o m a -> Process m a
+($$) = fuse
 
--- | Infix version of `flip feed`.
-(<~<) :: forall e m a. (MonadRec m) => Consumer e m a -> Producer e m a -> Process m a 
-(<~<) = flip feed
+-- | Transform a producer.
+($~) :: forall i o m a. (MonadRec m) => Producer i m a -> Transformer i o m a -> Producer o m a
+($~) = fuse
+
+-- | Transform a consumer.
+(~$) :: forall i o m a. (MonadRec m) => Transformer i o m a -> Consumer o m a -> Consumer i m a
+(~$) = fuse
+
+-- | Compose transformers
+(~~) :: forall i j k m a. (MonadRec m) => Transformer i j m a -> Transformer j k m a -> Transformer i k m a
+(~~) = fuse

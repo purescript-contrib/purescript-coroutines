@@ -5,19 +5,24 @@ import Prelude
 import Data.Either
 
 import Control.Coroutine
-import Control.Monad.Aff
-import Control.Monad.Aff.Console
+import Control.Monad.Eff
+import Control.Monad.Eff.Console
 import Control.Monad.Trans
+import Control.Monad.Rec.Class
 
-producer :: forall m a. (Monad m) => Producer Int m Unit
-producer = stateful inc 0
+nats :: forall m. (Monad m) => Producer Int m Unit
+nats = go 0
   where
-  inc i = do
-    return (Right (i + 1))
+  go i = do
+    emit i
+    go (i + 1)
     
-consumer :: forall a. Consumer Int (Aff _) Unit
-consumer = repeatedly do
+printer :: forall a. Consumer String (Eff _) Unit
+printer = forever do
   s <- await
-  lift (print s)
+  lift (log s)
+    
+showing :: forall m. (Monad m) => Transformer Int String m Unit
+showing = forever (transform show)
 
-main = launchAff $ runProcess (producer >~> consumer)
+main = runProcess (nats $~ showing $$ printer)
