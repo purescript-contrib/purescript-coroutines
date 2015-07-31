@@ -5,4 +5,52 @@
 
 ## Usage
 
+This library can be installed using Bower:
+
     bower i purescript-coroutines
+
+and built using Pulp:
+
+    pulp build
+    pulp test
+
+The basic building block is the coroutine type `Co`, which exhibits different behavior when it suspends based on a functor `f`:
+
+- When `f` is the `Emit o` functor, the coroutine emits an output of type `o`
+- When `f` is the `Await i` functor, the coroutine waits for an input of type `i`
+- When `f` is the `Transform i o` functor, the coroutine waits for an input of type `i`, and emits an output of type `o`
+
+Using these building blocks, we can create some standard coroutines, which can form pipelines.
+
+Here is a coroutine which generates the natural numbers in order:
+
+```purescript
+nats :: forall m. (Monad m) => Producer Int m Unit
+nats = go 0
+  where
+  go i = do
+    emit i
+    go (i + 1)
+```
+
+Here is a coroutine which accepts and prints strings:    
+
+```purescript
+printer :: forall a. Consumer String (Eff _) Unit
+printer = forever do
+  s <- await
+  lift (log s)
+```
+
+Here is a coroutine which transforms inputs by showing them as strings:
+
+```purescript
+showing :: forall a m. (Show a, Monad m) => Transformer a String m Unit
+showing = forever (transform show)
+```
+
+These coroutines can be combined using a handful of operators, and run using `runCo` or `runProcess`:
+
+```purescript
+main = runProcess (nats $~ showing $$ printer)
+```
