@@ -2,7 +2,9 @@ module Test.Main where
 
 import Prelude
 
+import Data.Maybe
 import Data.Either
+import Data.Functor (($>))
 
 import Control.Coroutine
 import Control.Monad.Eff
@@ -18,9 +20,7 @@ nats = go 0
     go (i + 1)
     
 printer :: forall a. Consumer String (Eff _) Unit
-printer = forever do
-  s <- await
-  lift (log s)
+printer = consumer \s -> log s $> Nothing
     
 showing :: forall a m. (Show a, Monad m) => Transformer a String m Unit
 showing = forever (transform show)

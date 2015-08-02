@@ -9,8 +9,8 @@ module Control.Coroutine
   , loop
   , runCo, runProcess
   , fuseWith
-  , Emit(..), Producer(), emit
-  , Await(..), Consumer(), await
+  , Emit(..), Producer(), emit, producer
+  , Await(..), Consumer(), await, consumer
   , Transform(..), Transformer(), transform
   , ($$), ($~), (~$), (~~)
   ) where
@@ -23,6 +23,7 @@ import Data.Exists
 import Data.Either
 import Data.Bifunctor (bimap)
 import Data.Identity
+import Data.Functor (($>))
 
 import Control.Bind ((<=<))
 import Control.Monad.Trans
@@ -141,6 +142,17 @@ type Producer o = Co (Emit o)
 -- | Emit an output value.
 emit :: forall m o. (Monad m) => o -> Producer o m Unit
 emit o = liftCo (Emit o unit)
+      
+-- | Create a `Consumer` by providing a handler function which consumes values.
+-- |
+-- | The handler function should return a value of type `r` at most once, when the
+-- | `Consumer` is ready to close.
+producer :: forall o m r. (Monad m) => m (Either o r) -> Producer o m r
+producer recv = loop do
+  e <- lift recv
+  case e of
+    Left o -> emit o $> Nothing
+    Right r -> return (Just r)
 
 -- | A generating functor for awaiting input values.
 newtype Await i a = Await (i -> a)
@@ -154,6 +166,15 @@ type Consumer i = Co (Await i)
 -- | Await an input value.
 await :: forall m i. (Monad m) => Consumer i m i
 await = liftCo (Await id)
+      
+-- | Create a `Consumer` by providing a handler function which consumes values.
+-- |
+-- | The handler function should return a value of type `r` at most once, when the
+-- | `Consumer` is ready to close.
+consumer :: forall i m r. (Monad m) => (i -> m (Maybe r)) -> Consumer i m r
+consumer send = loop do
+  a <- await
+  lift (send a)
 
 -- | A generating functor for transforming input values into output values.
 newtype Transform i o a = Transform (i -> Tuple o a)
