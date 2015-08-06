@@ -57,6 +57,14 @@ interpret :: forall f g m a. (Functor f, Functor m) => (forall a. f a -> g a) ->
 
 Change the functor `f` for a `Co`routine.
 
+#### `bimapCo`
+
+``` purescript
+bimapCo :: forall f g m n a. (Functor f, Functor n) => (forall a. f a -> g a) -> (forall a. m a -> n a) -> Co f m a -> Co g n a
+```
+
+Change the functor `f` and the underlying `Monad` for a `Co`routine.
+
 #### `loop`
 
 ``` purescript

@@ -6,7 +6,7 @@
 module Control.Coroutine
   ( Co(), Process()
   , liftCo
-  , hoistCo, interpret
+  , hoistCo, interpret, bimapCo
   , loop
   , runCo, runProcess
   , fuseWith
@@ -22,7 +22,7 @@ import Data.Maybe
 import Data.Tuple
 import Data.Exists
 import Data.Either
-import Data.Bifunctor (bimap, rmap)
+import Data.Bifunctor (bimap)
 import Data.Identity
 import Data.Functor (($>))
 
@@ -94,16 +94,16 @@ liftCo fa = Co \_ -> return (Right (map pure fa))
 
 -- | Change the underlying `Monad` for a `Co`routine.
 hoistCo :: forall f m n a. (Functor f, Functor n) => (forall a. m a -> n a) -> Co f m a -> Co f n a
-hoistCo n (Co m) = Co \_ -> map (map (hoistCo n)) <$> n (m unit)
-hoistCo n (Bind e) = runExists (\(Bound a f) -> bound (hoistCo n <<< a) (hoistCo n <<< f)) e
+hoistCo = bimapCo id
 
 -- | Change the functor `f` for a `Co`routine.
 interpret :: forall f g m a. (Functor f, Functor m) => (forall a. f a -> g a) -> Co f m a -> Co g m a
-interpret n (Bind e) = runExists (\(Bound a f) -> bound (interpret n <<< a) (interpret n <<< f)) e
-interpret n (Co f) = Co \_ -> map go (f unit)
-  where
-  go :: Either a (f (Co f m a)) -> Either a (g (Co g m a))
-  go = rmap (\fc -> n $ map (interpret n) fc)
+interpret nf = bimapCo nf id
+
+-- | Change the functor `f` and the underlying `Monad` for a `Co`routine.
+bimapCo :: forall f g m n a. (Functor f, Functor n) => (forall a. f a -> g a) -> (forall a. m a -> n a) -> Co f m a -> Co g n a
+bimapCo nf nm (Bind e) = runExists (\(Bound a f) -> bound (bimapCo nf nm <<< a) (bimapCo nf nm <<< f)) e
+bimapCo nf nm (Co m) = Co \_ -> map (nf <<< map (bimapCo nf nm)) <$> nm (m unit)
 
 -- | Loop until the computation returns a `Just`.
 loop :: forall f m a b. (Functor f, Monad m) => Co f m (Maybe a) -> Co f m a
