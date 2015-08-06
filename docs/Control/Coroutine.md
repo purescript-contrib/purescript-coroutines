@@ -111,6 +111,17 @@ emit :: forall m o. (Monad m) => o -> Producer o m Unit
 
 Emit an output value.
 
+#### `producer`
+
+``` purescript
+producer :: forall o m r. (Monad m) => m (Either o r) -> Producer o m r
+```
+
+Create a `Producer` by providing a monadic function that produces values.
+
+The function should return a value of type `r` at most once, when the
+`Producer` is ready to close.
+
 #### `Await`
 
 ``` purescript
@@ -140,6 +151,17 @@ await :: forall m i. (Monad m) => Consumer i m i
 ```
 
 Await an input value.
+
+#### `consumer`
+
+``` purescript
+consumer :: forall i m r. (Monad m) => (i -> m (Maybe r)) -> Consumer i m r
+```
+
+Create a `Consumer` by providing a handler function which consumes values.
+
+The handler function should return a value of type `r` at most once, when the
+`Consumer` is ready to close.
 
 #### `Transform`
 

@@ -14,7 +14,7 @@ module Control.Coroutine
   , Transform(..), Transformer(), transform
   , ($$), ($~), (~$), (~~)
   ) where
-      
+
 import Prelude
 
 import Data.Maybe
@@ -47,7 +47,7 @@ resume = tailRecM go
   where
   go :: Co f m a -> m (Either (Co f m a) (Either a (f (Co f m a))))
   go (Co f) = map Right (f unit)
-  go (Bind e) = runExists (\(Bound m f) -> 
+  go (Bind e) = runExists (\(Bound m f) ->
     case m unit of
       Co m -> do
         e <- m unit
@@ -62,19 +62,19 @@ type Process = Co Identity
 instance functorCo :: (Functor f, Functor m) => Functor (Co f m) where
   map f (Co m) = Co \_ -> map (bimap f (map (map f))) (m unit)
   map f (Bind e) = runExists (\(Bound a k) -> bound a (map f <<< k)) e
-  
+
 instance applyCo :: (Functor f, Monad m) => Apply (Co f m) where
   apply = ap
-  
+
 instance applicativeCo :: (Functor f, Monad m) => Applicative (Co f m) where
   pure a = Co \_ -> pure (Left a)
-  
+
 instance bindCo :: (Functor f, Monad m) => Bind (Co f m) where
   bind (Bind e) f = runExists (\(Bound a k) -> bound a (\x -> bound (\_ -> k x) f)) e
   bind a f = bound (\_ -> a) f
-  
+
 instance monadCo :: (Functor f, Monad m) => Monad (Co f m)
-  
+
 instance monadTransCo :: (Functor f) => MonadTrans (Co f) where
   lift ma = Co \_ -> map Left ma
 
@@ -91,15 +91,15 @@ instance monadRecCo :: (Functor f, Monad m) => MonadRec (Co f m) where
 hoistCo :: forall f m n a. (Functor f, Functor n) => (forall a. m a -> n a) -> Co f m a -> Co f n a
 hoistCo n (Co m) = Co \_ -> map (map (hoistCo n)) <$> n (m unit)
 hoistCo n (Bind e) = runExists (\(Bound a f) -> bound (hoistCo n <<< a) (hoistCo n <<< f)) e
-  
+
 -- | Loop until the computation returns a `Just`.
 loop :: forall f m a b. (Functor f, Monad m) => Co f m (Maybe a) -> Co f m a
 loop me = tailRecM (\_ -> map (maybe (Left unit) Right) me) unit
-    
+
 -- | Lift a command from the functor `f` into a one-step `Co`routine.
 liftCo :: forall f m a. (Functor f, Monad m) => f a -> Co f m a
 liftCo fa = Co \_ -> return (Right (map pure fa))
-  
+
 -- | Run a `Co`routine to completion.
 runCo :: forall f m a. (Functor f, MonadRec m) => (forall a. f a -> m a) -> Co f m a -> m a
 runCo interp = tailRecM (go <=< resume)
@@ -109,16 +109,16 @@ runCo interp = tailRecM (go <=< resume)
   go (Right fc) = do
     c <- interp fc
     return (Left c)
-    
+
 -- | Run a `Process` to completion.
 runProcess :: forall m a. (MonadRec m) => Process m a -> m a
 runProcess = runCo (return <<< runIdentity)
 
 -- | Fuse two `Co`routines.
 fuseWith :: forall f g h m a. (Functor f, Functor g, Functor h, MonadRec m) =>
-                              (forall a b c. (a -> b -> c) -> f a -> g b -> h c) -> 
-                              Co f m a -> 
-                              Co g m a -> 
+                              (forall a b c. (a -> b -> c) -> f a -> g b -> h c) ->
+                              Co f m a ->
+                              Co g m a ->
                               Co h m a
 fuseWith zap fs gs = Co \_ -> go (Tuple fs gs)
   where
@@ -135,18 +135,18 @@ data Emit o a = Emit o a
 
 instance functorEmit :: Functor (Emit o) where
   map f (Emit o a) = Emit o (f a)
-  
+
 -- | A type synonym for a `Co`routine which only emits values.
 type Producer o = Co (Emit o)
 
 -- | Emit an output value.
 emit :: forall m o. (Monad m) => o -> Producer o m Unit
 emit o = liftCo (Emit o unit)
-      
--- | Create a `Consumer` by providing a handler function which consumes values.
+
+-- | Create a `Producer` by providing a monadic function that produces values.
 -- |
--- | The handler function should return a value of type `r` at most once, when the
--- | `Consumer` is ready to close.
+-- | The function should return a value of type `r` at most once, when the
+-- | `Producer` is ready to close.
 producer :: forall o m r. (Monad m) => m (Either o r) -> Producer o m r
 producer recv = loop do
   e <- lift recv
@@ -159,14 +159,14 @@ newtype Await i a = Await (i -> a)
 
 instance functorAwait :: Functor (Await i) where
   map f (Await k) = Await (f <<< k)
-  
+
 -- | A type synonym for a `Co`routine which only awaits values.
 type Consumer i = Co (Await i)
 
 -- | Await an input value.
 await :: forall m i. (Monad m) => Consumer i m i
 await = liftCo (Await id)
-      
+
 -- | Create a `Consumer` by providing a handler function which consumes values.
 -- |
 -- | The handler function should return a value of type `r` at most once, when the
@@ -181,25 +181,25 @@ newtype Transform i o a = Transform (i -> Tuple o a)
 
 instance functorTransform :: Functor (Transform i o) where
   map f (Transform k) = Transform (map f <<< k)
-  
+
 -- | A type synonym for a `Co`routine which transforms values.
 type Transformer i o = Co (Transform i o)
 
 -- | Transform input values.
 transform :: forall m i o. (Monad m) => (i -> o) -> Transformer i o m Unit
 transform f = liftCo (Transform \i -> Tuple (f i) unit)
-        
+
 -- | Connect a producer and a consumer.
 ($$) :: forall o m a. (MonadRec m) => Producer o m a -> Consumer o m a -> Process m a
 ($$) = fuseWith \f (Emit e a) (Await c) -> Identity (f a (c e))
 
 -- | Transform a producer.
 ($~) :: forall i o m a. (MonadRec m) => Producer i m a -> Transformer i o m a -> Producer o m a
-($~) = fuseWith \f (Emit i a) (Transform t) -> case t i of Tuple o b -> Emit o (f a b) 
+($~) = fuseWith \f (Emit i a) (Transform t) -> case t i of Tuple o b -> Emit o (f a b)
 
 -- | Transform a consumer.
 (~$) :: forall i o m a. (MonadRec m) => Transformer i o m a -> Consumer o m a -> Consumer i m a
-(~$) = fuseWith \f (Transform t) (Await g) -> Await \i -> case t i of Tuple o a -> f a (g o) 
+(~$) = fuseWith \f (Transform t) (Await g) -> Await \i -> case t i of Tuple o a -> f a (g o)
 
 -- | Compose transformers
 (~~) :: forall i j k m a. (MonadRec m) => Transformer i j m a -> Transformer j k m a -> Transformer i k m a
