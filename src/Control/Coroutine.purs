@@ -5,7 +5,8 @@
 
 module Control.Coroutine
   ( Co(), Process()
-  , hoistCo, liftCo
+  , liftCo
+  , hoistCo, interpret, bimapCo
   , loop
   , runCo, runProcess
   , fuseWith
@@ -87,18 +88,26 @@ instance monadRecCo :: (Functor f, Monad m) => MonadRec (Co f m) where
         Left s1 -> go s1
         Right a -> return a
 
+-- | Lift a command from the functor `f` into a one-step `Co`routine.
+liftCo :: forall f m a. (Functor f, Monad m) => f a -> Co f m a
+liftCo fa = Co \_ -> return (Right (map pure fa))
+
 -- | Change the underlying `Monad` for a `Co`routine.
 hoistCo :: forall f m n a. (Functor f, Functor n) => (forall a. m a -> n a) -> Co f m a -> Co f n a
-hoistCo n (Co m) = Co \_ -> map (map (hoistCo n)) <$> n (m unit)
-hoistCo n (Bind e) = runExists (\(Bound a f) -> bound (hoistCo n <<< a) (hoistCo n <<< f)) e
+hoistCo = bimapCo id
+
+-- | Change the functor `f` for a `Co`routine.
+interpret :: forall f g m a. (Functor f, Functor m) => (forall a. f a -> g a) -> Co f m a -> Co g m a
+interpret nf = bimapCo nf id
+
+-- | Change the functor `f` and the underlying `Monad` for a `Co`routine.
+bimapCo :: forall f g m n a. (Functor f, Functor n) => (forall a. f a -> g a) -> (forall a. m a -> n a) -> Co f m a -> Co g n a
+bimapCo nf nm (Bind e) = runExists (\(Bound a f) -> bound (bimapCo nf nm <<< a) (bimapCo nf nm <<< f)) e
+bimapCo nf nm (Co m) = Co \_ -> map (nf <<< map (bimapCo nf nm)) <$> nm (m unit)
 
 -- | Loop until the computation returns a `Just`.
 loop :: forall f m a b. (Functor f, Monad m) => Co f m (Maybe a) -> Co f m a
 loop me = tailRecM (\_ -> map (maybe (Left unit) Right) me) unit
-
--- | Lift a command from the functor `f` into a one-step `Co`routine.
-liftCo :: forall f m a. (Functor f, Monad m) => f a -> Co f m a
-liftCo fa = Co \_ -> return (Right (map pure fa))
 
 -- | Run a `Co`routine to completion.
 runCo :: forall f m a. (Functor f, MonadRec m) => (forall a. f a -> m a) -> Co f m a -> m a
