@@ -5,7 +5,8 @@
 
 module Control.Coroutine
   ( Co(), Process()
-  , hoistCo, liftCo
+  , liftCo
+  , hoistCo, interpret
   , loop
   , runCo, runProcess
   , fuseWith
@@ -21,7 +22,7 @@ import Data.Maybe
 import Data.Tuple
 import Data.Exists
 import Data.Either
-import Data.Bifunctor (bimap)
+import Data.Bifunctor (bimap, rmap)
 import Data.Identity
 import Data.Functor (($>))
 
@@ -87,18 +88,26 @@ instance monadRecCo :: (Functor f, Monad m) => MonadRec (Co f m) where
         Left s1 -> go s1
         Right a -> return a
 
+-- | Lift a command from the functor `f` into a one-step `Co`routine.
+liftCo :: forall f m a. (Functor f, Monad m) => f a -> Co f m a
+liftCo fa = Co \_ -> return (Right (map pure fa))
+
 -- | Change the underlying `Monad` for a `Co`routine.
 hoistCo :: forall f m n a. (Functor f, Functor n) => (forall a. m a -> n a) -> Co f m a -> Co f n a
 hoistCo n (Co m) = Co \_ -> map (map (hoistCo n)) <$> n (m unit)
 hoistCo n (Bind e) = runExists (\(Bound a f) -> bound (hoistCo n <<< a) (hoistCo n <<< f)) e
 
+-- | Change the functor `f` for a `Co`routine.
+interpret :: forall f g m a. (Functor f, Functor m) => (forall a. f a -> g a) -> Co f m a -> Co g m a
+interpret n (Bind e) = runExists (\(Bound a f) -> bound (interpret n <<< a) (interpret n <<< f)) e
+interpret n (Co f) = Co \_ -> map go (f unit)
+  where
+  go :: Either a (f (Co f m a)) -> Either a (g (Co g m a))
+  go = rmap (\fc -> n $ map (interpret n) fc)
+
 -- | Loop until the computation returns a `Just`.
 loop :: forall f m a b. (Functor f, Monad m) => Co f m (Maybe a) -> Co f m a
 loop me = tailRecM (\_ -> map (maybe (Left unit) Right) me) unit
-
--- | Lift a command from the functor `f` into a one-step `Co`routine.
-liftCo :: forall f m a. (Functor f, Monad m) => f a -> Co f m a
-liftCo fa = Co \_ -> return (Right (map pure fa))
 
 -- | Run a `Co`routine to completion.
 runCo :: forall f m a. (Functor f, MonadRec m) => (forall a. f a -> m a) -> Co f m a -> m a

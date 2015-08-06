@@ -33,6 +33,14 @@ type Process = Co Identity
 
 A `Process` is a `Co`routine which only has side effects, and supports no commands.
 
+#### `liftCo`
+
+``` purescript
+liftCo :: forall f m a. (Functor f, Monad m) => f a -> Co f m a
+```
+
+Lift a command from the functor `f` into a one-step `Co`routine.
+
 #### `hoistCo`
 
 ``` purescript
@@ -41,6 +49,14 @@ hoistCo :: forall f m n a. (Functor f, Functor n) => (forall a. m a -> n a) -> C
 
 Change the underlying `Monad` for a `Co`routine.
 
+#### `interpret`
+
+``` purescript
+interpret :: forall f g m a. (Functor f, Functor m) => (forall a. f a -> g a) -> Co f m a -> Co g m a
+```
+
+Change the functor `f` for a `Co`routine.
+
 #### `loop`
 
 ``` purescript
@@ -48,14 +64,6 @@ loop :: forall f m a b. (Functor f, Monad m) => Co f m (Maybe a) -> Co f m a
 ```
 
 Loop until the computation returns a `Just`.
-
-#### `liftCo`
-
-``` purescript
-liftCo :: forall f m a. (Functor f, Monad m) => f a -> Co f m a
-```
-
-Lift a command from the functor `f` into a one-step `Co`routine.
 
 #### `runCo`
 
