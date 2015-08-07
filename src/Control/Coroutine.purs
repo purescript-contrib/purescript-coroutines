@@ -22,7 +22,8 @@ import Data.Maybe
 import Data.Tuple
 import Data.Exists
 import Data.Either
-import Data.Bifunctor (bimap)
+import qualified Data.Bifunctor as B
+import qualified Data.Profunctor as P
 import Data.Identity
 import Data.Functor (($>))
 
@@ -61,7 +62,7 @@ resume = tailRecM go
 type Process = Co Identity
 
 instance functorCo :: (Functor f, Functor m) => Functor (Co f m) where
-  map f (Co m) = Co \_ -> map (bimap f (map (map f))) (m unit)
+  map f (Co m) = Co \_ -> map (B.bimap f (map (map f))) (m unit)
   map f (Bind e) = runExists (\(Bound a k) -> bound a (map f <<< k)) e
 
 instance applyCo :: (Functor f, Monad m) => Apply (Co f m) where
@@ -142,8 +143,11 @@ fuseWith zap fs gs = Co \_ -> go (Tuple fs gs)
 -- | A generating functor for emitting output values.
 data Emit o a = Emit o a
 
+instance bifunctorEmit :: B.Bifunctor Emit where
+  bimap f g (Emit o a) = Emit (f o) (g a)
+
 instance functorEmit :: Functor (Emit o) where
-  map f (Emit o a) = Emit o (f a)
+  map = B.rmap
 
 -- | A type synonym for a `Co`routine which only emits values.
 type Producer o = Co (Emit o)
@@ -166,8 +170,11 @@ producer recv = loop do
 -- | A generating functor for awaiting input values.
 newtype Await i a = Await (i -> a)
 
+instance profunctorAwait :: P.Profunctor Await where
+  dimap f g (Await k) = Await (P.dimap f g k)
+
 instance functorAwait :: Functor (Await i) where
-  map f (Await k) = Await (f <<< k)
+  map = P.rmap
 
 -- | A type synonym for a `Co`routine which only awaits values.
 type Consumer i = Co (Await i)
@@ -188,8 +195,11 @@ consumer send = loop do
 -- | A generating functor for transforming input values into output values.
 newtype Transform i o a = Transform (i -> Tuple o a)
 
+instance bifunctorTransform :: B.Bifunctor (Transform i) where
+  bimap f g (Transform k) = Transform (B.bimap f g <<< k)
+
 instance functorTransform :: Functor (Transform i o) where
-  map f (Transform k) = Transform (map f <<< k)
+  map = B.rmap
 
 -- | A type synonym for a `Co`routine which transforms values.
 type Transformer i o = Co (Transform i o)
