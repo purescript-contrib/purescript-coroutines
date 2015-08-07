@@ -134,8 +134,8 @@ fuseWith zap fs gs = Co \_ -> go (Tuple fs gs)
   where
   go :: Tuple (Co f m a) (Co g m a) -> m (Either a (h (Co h m a)))
   go (Tuple fs gs) = do
-    e1 <- resume fs
     e2 <- resume gs
+    e1 <- resume fs
     case zap Tuple <$> e1 <*> e2 of
       Left a -> return (Left a)
       Right o -> return (Right (map (\t -> Co \_ -> go t) o))
