@@ -108,6 +108,7 @@ A generating functor for emitting output values.
 
 ##### Instances
 ``` purescript
+instance bifunctorEmit :: Bifunctor Emit
 instance functorEmit :: Functor (Emit o)
 ```
 
@@ -149,6 +150,7 @@ A generating functor for awaiting input values.
 
 ##### Instances
 ``` purescript
+instance profunctorAwait :: Profunctor Await
 instance functorAwait :: Functor (Await i)
 ```
 
@@ -190,6 +192,7 @@ A generating functor for transforming input values into output values.
 
 ##### Instances
 ``` purescript
+instance bifunctorTransform :: Bifunctor (Transform i)
 instance functorTransform :: Functor (Transform i o)
 ```
 
