@@ -8,22 +8,11 @@ fork, join, or any combination.
 #### `Co`
 
 ``` purescript
-data Co f m a
+type Co = FreeT
 ```
 
 A coroutine whose commands are given by the functor `f`, with side effects
 at each step given by the monad `m`.
-
-##### Instances
-``` purescript
-instance functorCo :: (Functor f, Functor m) => Functor (Co f m)
-instance applyCo :: (Functor f, Monad m) => Apply (Co f m)
-instance applicativeCo :: (Functor f, Monad m) => Applicative (Co f m)
-instance bindCo :: (Functor f, Monad m) => Bind (Co f m)
-instance monadCo :: (Functor f, Monad m) => Monad (Co f m)
-instance monadTransCo :: (Functor f) => MonadTrans (Co f)
-instance monadRecCo :: (Functor f, Monad m) => MonadRec (Co f m)
-```
 
 #### `Process`
 
@@ -33,38 +22,6 @@ type Process = Co Identity
 
 A `Process` is a `Co`routine which only has side effects, and supports no commands.
 
-#### `liftCo`
-
-``` purescript
-liftCo :: forall f m a. (Functor f, Monad m) => f a -> Co f m a
-```
-
-Lift a command from the functor `f` into a one-step `Co`routine.
-
-#### `hoistCo`
-
-``` purescript
-hoistCo :: forall f m n a. (Functor f, Functor n) => (forall a. m a -> n a) -> Co f m a -> Co f n a
-```
-
-Change the underlying `Monad` for a `Co`routine.
-
-#### `interpret`
-
-``` purescript
-interpret :: forall f g m a. (Functor f, Functor m) => (forall a. f a -> g a) -> Co f m a -> Co g m a
-```
-
-Change the functor `f` for a `Co`routine.
-
-#### `bimapCo`
-
-``` purescript
-bimapCo :: forall f g m n a. (Functor f, Functor n) => (forall a. f a -> g a) -> (forall a. m a -> n a) -> Co f m a -> Co g n a
-```
-
-Change the functor `f` and the underlying `Monad` for a `Co`routine.
-
 #### `loop`
 
 ``` purescript
@@ -72,14 +29,6 @@ loop :: forall f m a b. (Functor f, Monad m) => Co f m (Maybe a) -> Co f m a
 ```
 
 Loop until the computation returns a `Just`.
-
-#### `runCo`
-
-``` purescript
-runCo :: forall f m a. (Functor f, MonadRec m) => (forall a. f a -> m a) -> Co f m a -> m a
-```
-
-Run a `Co`routine to completion.
 
 #### `runProcess`
 
