@@ -201,4 +201,24 @@ _left-associative / precedence -1_
 
 Compose transformers
 
+#### `(/\)`
+
+``` purescript
+(/\) :: forall o1 o2 m a. (MonadRec m) => Producer o1 m a -> Producer o2 m a -> Producer (Tuple o1 o2) m a
+```
+
+_left-associative / precedence -1_
+
+Run two producers together.
+
+#### `(\/)`
+
+``` purescript
+(\/) :: forall i1 i2 m a. (MonadRec m) => Consumer i1 m a -> Consumer i2 m a -> Consumer (Tuple i1 i2) m a
+```
+
+_left-associative / precedence -1_
+
+Run two consumers together
+
 

@@ -12,7 +12,7 @@ module Control.Coroutine
   , Emit(..), Producer(), emit, producer
   , Await(..), Consumer(), await, consumer
   , Transform(..), Transformer(), transform
-  , ($$), ($~), (~$), (~~)
+  , ($$), ($~), (~$), (~~), (/\), (\/)
   ) where
 
 import Prelude
@@ -143,3 +143,11 @@ transform f = liftFreeT (Transform \i -> Tuple (f i) unit)
 -- | Compose transformers
 (~~) :: forall i j k m a. (MonadRec m) => Transformer i j m a -> Transformer j k m a -> Transformer i k m a
 (~~) = fuseWith \f (Transform g) (Transform h) -> Transform \i -> case g i of Tuple j a -> case h j of Tuple k b -> Tuple k (f a b)
+
+-- | Run two producers together.
+(/\) :: forall o1 o2 m a. (MonadRec m) => Producer o1 m a -> Producer o2 m a -> Producer (Tuple o1 o2) m a
+(/\) = fuseWith \f (Emit o1 a) (Emit o2 b) -> Emit (Tuple o1 o2) (f a b)
+
+-- | Run two consumers together
+(\/) :: forall i1 i2 m a. (MonadRec m) => Consumer i1 m a -> Consumer i2 m a -> Consumer (Tuple i1 i2) m a
+(\/) = fuseWith \f (Await k1) (Await k2) -> Await \(Tuple i1 i2) -> f (k1 i1) (k2 i2)
