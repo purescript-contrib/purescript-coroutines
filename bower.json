@@ -9,6 +9,10 @@
     "bower_components",
     "output"
   ],
+  "repository": {                                                
+    "type": "git",                                               
+    "url": "git://github.com/paf31/purescript-coroutines.git"  
+  },                                                              
   "dependencies": {
     "purescript-either": "^0.2.0",
     "purescript-exists": "^0.2.0",
