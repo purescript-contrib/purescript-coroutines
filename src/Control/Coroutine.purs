@@ -13,6 +13,7 @@ module Control.Coroutine
   , Await(..), Consumer(), await, consumer
   , Transform(..), Transformer(), transform
   , ($$), ($~), (~$), (~~), (/\), (\/)
+  , Product(..), Fuse(), forkJoin
   ) where
 
 import Prelude
@@ -22,6 +23,7 @@ import Data.Tuple
 import Data.Either
 import Data.Identity
 import Data.Functor (($>))
+import Data.Functor.Coproduct
 
 import qualified Data.Bifunctor as B
 import qualified Data.Profunctor as P
@@ -60,6 +62,7 @@ fuseWith zap fs gs = freeT \_ -> go (Tuple fs gs)
     case zap Tuple <$> e1 <*> e2 of
       Left a -> return (Left a)
       Right o -> return (Right (map (\t -> freeT \_ -> go t) o))
+
 -- | A generating functor for emitting output values.
 data Emit o a = Emit o a
 
@@ -151,3 +154,15 @@ transform f = liftFreeT (Transform \i -> Tuple (f i) unit)
 -- | Run two consumers together
 (\/) :: forall i1 i2 m a. (MonadRec m) => Consumer i1 m a -> Consumer i2 m a -> Consumer (Tuple i1 i2) m a
 (\/) = fuseWith \f (Await k1) (Await k2) -> Await \(Tuple i1 i2) -> f (k1 i1) (k2 i2)
+
+-- | A functor product
+data Product f g a = Product (f a) (g a)
+
+-- | A fusion operator for a pair of functors
+type Fuse f g h = forall a b c. (a -> b -> c) -> f a -> g b -> h c
+
+-- | Fuse a coproduct
+forkJoin :: forall f1 f2 g1 g2 h1 h2. Fuse f1 g1 h1 -> Fuse f2 g2 h2 -> Fuse (Coproduct f1 f2) (Product g1 g2) (Coproduct h1 h2)
+forkJoin zap1 _ f (Coproduct (Left f1a))  (Product g1b _) = Coproduct (Left  (zap1 f f1a g1b))
+forkJoin _ zap2 f (Coproduct (Right f2a)) (Product _ g2b) = Coproduct (Right (zap2 f f2a g2b)) 
+
