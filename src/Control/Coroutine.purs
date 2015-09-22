@@ -38,7 +38,7 @@ type Co = FreeT
 type Process = Co Identity
 
 -- | Loop until the computation returns a `Just`.
-loop :: forall f m a b. (Functor f, Monad m) => Co f m (Maybe a) -> Co f m a
+loop :: forall f m a. (Functor f, Monad m) => Co f m (Maybe a) -> Co f m a
 loop me = tailRecM (\_ -> map (maybe (Left unit) Right) me) unit
 
 -- | Run a `Process` to completion.
@@ -47,7 +47,7 @@ runProcess = runFreeT (return <<< runIdentity)
 
 -- | Fuse two `Co`routines.
 fuseWith :: forall f g h m a. (Functor f, Functor g, Functor h, MonadRec m) =>
-                              (forall a b c. (a -> b -> c) -> f a -> g b -> h c) ->
+                              (forall b c d. (b -> c -> d) -> f b -> g c -> h d) ->
                               Co f m a ->
                               Co g m a ->
                               Co h m a
