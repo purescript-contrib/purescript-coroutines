@@ -25,7 +25,7 @@ A `Process` is a `Co`routine which only has side effects, and supports no comman
 #### `loop`
 
 ``` purescript
-loop :: forall f m a b. (Functor f, Monad m) => Co f m (Maybe a) -> Co f m a
+loop :: forall f m a. (Functor f, Monad m) => Co f m (Maybe a) -> Co f m a
 ```
 
 Loop until the computation returns a `Just`.
@@ -41,7 +41,7 @@ Run a `Process` to completion.
 #### `fuseWith`
 
 ``` purescript
-fuseWith :: forall f g h m a. (Functor f, Functor g, Functor h, MonadRec m) => (forall a b c. (a -> b -> c) -> f a -> g b -> h c) -> Co f m a -> Co g m a -> Co h m a
+fuseWith :: forall f g h m a. (Functor f, Functor g, Functor h, MonadRec m) => (forall b c d. (b -> c -> d) -> f b -> g c -> h d) -> Co f m a -> Co g m a -> Co h m a
 ```
 
 Fuse two `Co`routines.
