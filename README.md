@@ -18,7 +18,7 @@ and built using Pulp:
 
 The basic building block is the coroutine type `Co`, which exhibits different behavior when it suspends based on a functor `f`:
 
-- When `f` is the `Emit o` functor, the coroutine emits an output of type `o`
+- When `f` is the `Emit o` functror, the coroutine emits an output of type `o`
 - When `f` is the `Await i` functor, the coroutine waits for an input of type `i`
 - When `f` is the `Transform i o` functor, the coroutine waits for an input of type `i`, and emits an output of type `o`
 
@@ -53,7 +53,7 @@ showing :: forall a m. (Show a, Monad m) => Transformer a String m Unit
 showing = forever (transform show)
 ```
 
-These coroutines can be combined using a handful of operators, and run using `runCo` or `runProcess`:
+These coroutines can be combined using a handful of operators, and run using `runFreeT` or `runProcess`:
 
 ```purescript
 main = runProcess (nats $~ showing $$ printer)
