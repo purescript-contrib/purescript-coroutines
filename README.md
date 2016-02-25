@@ -1,5 +1,7 @@
 # purescript-coroutines
 
+[![Latest release](http://img.shields.io/bower/v/purescript-coroutines.svg)](https://github.com/purescript-contrib/purescript-coroutines/releases)
+[![Maintainer: paf31](https://img.shields.io/badge/maintainer-paf31-lightgrey.svg)](http://github.com/paf31)
 [![Pursuit](http://pursuit.purescript.org/packages/purescript-coroutines/badge)](http://pursuit.purescript.org/packages/purescript-coroutines/)
 
 - [Module Documentation](docs/Control/Coroutine.md)
