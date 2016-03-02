@@ -57,8 +57,8 @@ A generating functor for emitting output values.
 
 ##### Instances
 ``` purescript
-instance bifunctorEmit :: Bifunctor Emit
-instance functorEmit :: Functor (Emit o)
+Bifunctor Emit
+Functor (Emit o)
 ```
 
 #### `Producer`
@@ -99,8 +99,8 @@ A generating functor for awaiting input values.
 
 ##### Instances
 ``` purescript
-instance profunctorAwait :: Profunctor Await
-instance functorAwait :: Functor (Await i)
+Profunctor Await
+Functor (Await i)
 ```
 
 #### `Consumer`
@@ -141,8 +141,8 @@ A generating functor for transforming input values into output values.
 
 ##### Instances
 ``` purescript
-instance bifunctorTransform :: Bifunctor (Transform i)
-instance functorTransform :: Functor (Transform i o)
+Bifunctor (Transform i)
+Functor (Transform i o)
 ```
 
 #### `Transformer`
@@ -160,6 +160,46 @@ transform :: forall m i o. (Monad m) => (i -> o) -> Transformer i o m Unit
 ```
 
 Transform input values.
+
+#### `CoTransform`
+
+``` purescript
+data CoTransform i o a
+  = CoTransform o (i -> a)
+```
+
+A generating functor which yields a value before waiting for an input. 
+
+##### Instances
+``` purescript
+Bifunctor (CoTransform i)
+Functor (CoTransform i o)
+```
+
+#### `CoTransformer`
+
+``` purescript
+type CoTransformer i o = Co (CoTransform i o)
+```
+
+A type synonym for a `Co`routine which "cotransforms" values, emitting an output
+before waiting for its input.
+
+#### `cotransform`
+
+``` purescript
+cotransform :: forall m i o. (Monad m) => o -> (i -> m Unit) -> CoTransformer i o m Unit
+```
+
+Cotransform input values.
+
+#### `fuseCoTransform`
+
+``` purescript
+fuseCoTransform :: forall i o m a. (MonadRec m) => Transformer i o m a -> CoTransformer o i m a -> Process m a
+```
+
+Fuse a transformer and a cotransformer.
 
 #### `($$)`
 

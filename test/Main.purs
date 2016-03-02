@@ -25,4 +25,13 @@ printer = consumer \s -> log s $> Nothing
 showing :: forall a m. (Show a, Monad m) => Transformer a String m Unit
 showing = forever (transform show)
 
-main = runProcess (nats $~ showing $$ printer)
+coshowing :: CoTransformer String Int (Eff _) Unit
+coshowing = go 0
+  where
+  go i = do
+    cotransform i log
+    go (i + 1)
+
+main =
+  runProcess (showing `fuseCoTransform` coshowing)
+  -- runProcess (nats $~ showing $$ printer)
