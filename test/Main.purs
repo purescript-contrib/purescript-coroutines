@@ -2,27 +2,25 @@ module Test.Main where
 
 import Prelude
 
-import Data.Maybe
-import Data.Either
+import Control.Coroutine (Transformer, Consumer, Producer, runProcess, transform, consumer, emit, (~$), ($$), (/\))
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Console (CONSOLE, log)
+import Control.Monad.Rec.Class (forever)
 import Data.Functor (($>))
+import Data.Maybe (Maybe(..))
 
-import Control.Coroutine
-import Control.Monad.Eff
-import Control.Monad.Eff.Console
-import Control.Monad.Trans
-import Control.Monad.Rec.Class
-
-nats :: forall m. (Monad m) => Producer Int m Unit
+nats :: forall m. Monad m => Producer Int m Unit
 nats = go 0
   where
   go i = do
     emit i
     go (i + 1)
-    
-printer :: forall a. Consumer String (Eff _) Unit
+
+printer :: forall eff. Consumer String (Eff (console :: CONSOLE | eff)) Unit
 printer = consumer \s -> log s $> Nothing
-    
+
 showing :: forall a m. (Show a, Monad m) => Transformer a String m Unit
 showing = forever (transform show)
 
-main = runProcess (nats $~ showing $$ printer)
+main :: forall eff. Eff (console :: CONSOLE | eff) Unit
+main = runProcess (nats /\ nats $$ showing ~$ printer)
