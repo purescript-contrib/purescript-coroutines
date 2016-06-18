@@ -161,6 +161,46 @@ transform :: forall m i o. Monad m => (i -> o) -> Transformer i o m Unit
 
 Transform input values.
 
+#### `CoTransform`
+
+``` purescript
+data CoTransform i o a
+  = CoTransform o (i -> a)
+```
+
+A generating functor which yields a value before waiting for an input.
+
+##### Instances
+``` purescript
+Bifunctor (CoTransform i)
+Functor (CoTransform i o)
+```
+
+#### `CoTransformer`
+
+``` purescript
+type CoTransformer i o = Co (CoTransform i o)
+```
+
+A type synonym for a `Co`routine which "cotransforms" values, emitting an output
+before waiting for its input.
+
+#### `cotransform`
+
+``` purescript
+cotransform :: forall m i o. Monad m => o -> CoTransformer i o m i
+```
+
+Cotransform input values.
+
+#### `fuseCoTransform`
+
+``` purescript
+fuseCoTransform :: forall i o m a. MonadRec m => Transformer i o m a -> CoTransformer o i m a -> Process m a
+```
+
+Fuse a transformer and a cotransformer.
+
 #### `connect`
 
 ``` purescript

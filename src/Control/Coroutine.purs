@@ -12,10 +12,12 @@ module Control.Coroutine
   , Emit(..), Producer(), emit, producer
   , Await(..), Consumer(), await, consumer
   , Transform(..), Transformer(), transform
+  , CoTransform(..), CoTransformer(), cotransform
   , connect, ($$)
   , transformProducer, ($~)
   , transformConsumer, (~$)
   , composeTransformers, (~~)
+  , fuseCoTransform
   , joinProducers, (/\)
   , joinConsumers, (\/)
   ) where
@@ -130,6 +132,27 @@ type Transformer i o = Co (Transform i o)
 -- | Transform input values.
 transform :: forall m i o. Monad m => (i -> o) -> Transformer i o m Unit
 transform f = liftFreeT (Transform \i -> Tuple (f i) unit)
+
+-- | A generating functor which yields a value before waiting for an input.
+data CoTransform i o a = CoTransform o (i -> a)
+
+instance bifunctorCoTransform :: B.Bifunctor (CoTransform i) where
+  bimap f g (CoTransform o k) = CoTransform (f o) (g <<< k)
+
+instance functorCoTransform :: Functor (CoTransform i o) where
+  map = B.rmap
+
+-- | A type synonym for a `Co`routine which "cotransforms" values, emitting an output
+-- | before waiting for its input.
+type CoTransformer i o = Co (CoTransform i o)
+
+-- | Cotransform input values.
+cotransform :: forall m i o. Monad m => o -> CoTransformer i o m i
+cotransform o = freeT \_ -> pure (Right (CoTransform o pure))
+
+-- | Fuse a transformer and a cotransformer.
+fuseCoTransform :: forall i o m a. MonadRec m => Transformer i o m a -> CoTransformer o i m a -> Process m a
+fuseCoTransform = fuseWith \f (Transform t) (CoTransform i c) -> Identity (case t i of Tuple o a -> f a (c o))
 
 -- | Connect a producer and a consumer.
 connect :: forall o m a. MonadRec m => Producer o m a -> Consumer o m a -> Process m a
