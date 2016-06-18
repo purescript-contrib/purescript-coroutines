@@ -17,6 +17,7 @@ module Control.Coroutine
   , transformProducer, ($~)
   , transformConsumer, (~$)
   , composeTransformers, (~~)
+  , composeCoTransformers
   , fuseCoTransform
   , transformCoTransformL
   , transformCoTransformR
@@ -202,6 +203,11 @@ composeTransformers :: forall i j k m a. MonadRec m => Transformer i j m a -> Tr
 composeTransformers = fuseWith \f (Transform g) (Transform h) -> Transform \i -> case g i of Tuple j a -> case h j of Tuple k b -> Tuple k (f a b)
 
 infixr 2 composeTransformers as ~~
+
+-- | Compose cotransformers
+composeCoTransformers :: forall i j k m a. MonadRec m => CoTransformer i j m a -> CoTransformer j k m a -> CoTransformer i k m a
+composeCoTransformers = fuseWith \f (CoTransform j g) (CoTransform k h) ->
+  CoTransform k (\i -> f (g i) (h j))
 
 -- | Run two producers together.
 joinProducers :: forall o1 o2 m a. MonadRec m => Producer o1 m a -> Producer o2 m a -> Producer (Tuple o1 o2) m a

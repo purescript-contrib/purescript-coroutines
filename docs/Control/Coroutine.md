@@ -273,6 +273,14 @@ Compose transformers
 infixr 2 composeTransformers as ~~
 ```
 
+#### `composeCoTransformers`
+
+``` purescript
+composeCoTransformers :: forall i j k m a. MonadRec m => CoTransformer i j m a -> CoTransformer j k m a -> CoTransformer i k m a
+```
+
+Compose cotransformers
+
 #### `joinProducers`
 
 ``` purescript
