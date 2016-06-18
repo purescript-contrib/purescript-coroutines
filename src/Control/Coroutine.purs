@@ -147,8 +147,8 @@ instance functorCoTransform :: Functor (CoTransform i o) where
 type CoTransformer i o = Co (CoTransform i o)
 
 -- | Cotransform input values.
-cotransform :: forall m i o. Monad m => o -> (i -> m Unit) -> CoTransformer i o m Unit
-cotransform o f = freeT \_ -> pure (Right (CoTransform o (lift <<< f)))
+cotransform :: forall m i o. Monad m => o -> CoTransformer i o m i
+cotransform o = freeT \_ -> pure (Right (CoTransform o pure))
 
 -- | Fuse a transformer and a cotransformer.
 fuseCoTransform :: forall i o m a. MonadRec m => Transformer i o m a -> CoTransformer o i m a -> Process m a

@@ -188,7 +188,7 @@ before waiting for its input.
 #### `cotransform`
 
 ``` purescript
-cotransform :: forall m i o. Monad m => o -> (i -> m Unit) -> CoTransformer i o m Unit
+cotransform :: forall m i o. Monad m => o -> CoTransformer i o m i
 ```
 
 Cotransform input values.

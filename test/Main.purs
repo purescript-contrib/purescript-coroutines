@@ -8,6 +8,7 @@ import Control.Coroutine (Transformer, CoTransformer, Consumer, Producer,
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, log)
 import Control.Monad.Rec.Class (forever)
+import Control.Monad.Trans (lift)
 import Data.Functor (($>))
 import Data.Maybe (Maybe(..))
 
@@ -28,7 +29,8 @@ coshowing :: CoTransformer String Int (Eff _) Unit
 coshowing = go 0
   where
   go i = do
-    cotransform i log
+    o <- cotransform i
+    lift (log o)
     go (i + 1)
 
 main :: forall eff. Eff (console :: CONSOLE | eff) Unit
