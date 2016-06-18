@@ -193,6 +193,22 @@ cotransform :: forall m i o. Monad m => o -> CoTransformer i o m i
 
 Cotransform input values.
 
+#### `transformCoTransformL`
+
+``` purescript
+transformCoTransformL :: forall i1 i2 o m a. MonadRec m => Transformer i1 i2 m a -> CoTransformer i2 o m a -> CoTransformer i1 o m a
+```
+
+Transform a `CoTransformer` on the left.
+
+#### `transformCoTransformR`
+
+``` purescript
+transformCoTransformR :: forall i o1 o2 m a. MonadRec m => CoTransformer i o1 m a -> Transformer o1 o2 m a -> CoTransformer i o2 m a
+```
+
+Transform a `CoTransformer` on the right.
+
 #### `fuseCoTransform`
 
 ``` purescript

@@ -18,6 +18,8 @@ module Control.Coroutine
   , transformConsumer, (~$)
   , composeTransformers, (~~)
   , fuseCoTransform
+  , transformCoTransformL
+  , transformCoTransformR
   , joinProducers, (/\)
   , joinConsumers, (\/)
   ) where
@@ -149,6 +151,29 @@ type CoTransformer i o = Co (CoTransform i o)
 -- | Cotransform input values.
 cotransform :: forall m i o. Monad m => o -> CoTransformer i o m i
 cotransform o = freeT \_ -> pure (Right (CoTransform o pure))
+
+-- | Transform a `CoTransformer` on the left.
+transformCoTransformL
+  :: forall i1 i2 o m a
+   . MonadRec m
+  => Transformer i1 i2 m a
+  -> CoTransformer i2 o m a
+  -> CoTransformer i1 o m a
+transformCoTransformL = fuseWith \f (Transform t) (CoTransform o c) ->
+  CoTransform o \i1 ->
+    case t i1 of
+      Tuple i2 a -> f a (c i2)
+
+-- | Transform a `CoTransformer` on the right.
+transformCoTransformR
+  :: forall i o1 o2 m a
+   . MonadRec m
+  => CoTransformer i o1 m a
+  -> Transformer o1 o2 m a
+  -> CoTransformer i o2 m a
+transformCoTransformR = fuseWith \f (CoTransform o1 c) (Transform t) ->
+  case t o1 of
+    Tuple o2 a -> CoTransform o2 ((_ `f` a) <<< c)
 
 -- | Fuse a transformer and a cotransformer.
 fuseCoTransform :: forall i o m a. MonadRec m => Transformer i o m a -> CoTransformer o i m a -> Process m a

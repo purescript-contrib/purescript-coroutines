@@ -25,7 +25,7 @@ printer = consumer \s -> log s $> Nothing
 showing :: forall a m. (Show a, Monad m) => Transformer a String m Unit
 showing = forever (transform show)
 
-coshowing :: CoTransformer String Int (Eff _) Unit
+coshowing :: forall eff. CoTransformer String Int (Eff (console :: CONSOLE | eff)) Unit
 coshowing = go 0
   where
   go i = do
