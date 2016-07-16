@@ -15,6 +15,10 @@
   },
   "dependencies": {
     "purescript-freet": "^1.0.0",
-    "purescript-profunctor": "^1.0.0"
+    "purescript-profunctor": "^1.0.0",
+    "purescript-parallel": "^1.0.0"
+  },
+  "devDependencies": {
+    "purescript-aff": "^1.0.0"
   }
 }
