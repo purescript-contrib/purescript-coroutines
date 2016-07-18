@@ -47,7 +47,7 @@ type Co = FreeT
 -- | A `Process` is a `Co`routine which only has side effects, and supports no commands.
 type Process = Co Identity
 
--- | Loop until the computation pures a `Just`.
+-- | Loop until the computation returns a `Just`.
 loop :: forall f m a. (Functor f, Monad m) => Co f m (Maybe a) -> Co f m a
 loop me = tailRecM (\_ -> map (maybe (Left unit) Right) me) unit
 
