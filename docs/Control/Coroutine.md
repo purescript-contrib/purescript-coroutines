@@ -28,7 +28,7 @@ A `Process` is a `Co`routine which only has side effects, and supports no comman
 loop :: forall f m a. (Functor f, Monad m) => Co f m (Maybe a) -> Co f m a
 ```
 
-Loop until the computation pures a `Just`.
+Loop until the computation returns a `Just`.
 
 #### `runProcess`
 
@@ -41,7 +41,7 @@ Run a `Process` to completion.
 #### `fuseWith`
 
 ``` purescript
-fuseWith :: forall f g h m a. (Functor f, Functor g, Functor h, MonadRec m, MonadPar m) => (forall d. forall b c. (b -> c -> d) -> f b -> g c -> h d) -> Co f m a -> Co g m a -> Co h m a
+fuseWith :: forall f g h m a par. (Functor f, Functor g, Functor h, MonadRec m, MonadPar par m) => (forall b c d. (b -> c -> d) -> f b -> g c -> h d) -> Co f m a -> Co g m a -> Co h m a
 ```
 
 Fuse two `Co`routines.
@@ -196,7 +196,7 @@ Cotransform input values.
 #### `transformCoTransformL`
 
 ``` purescript
-transformCoTransformL :: forall i1 i2 o m a. (MonadRec m, MonadPar m) => Transformer i1 i2 m a -> CoTransformer i2 o m a -> CoTransformer i1 o m a
+transformCoTransformL :: forall i1 i2 o f m a. (MonadRec m, MonadPar f m) => Transformer i1 i2 m a -> CoTransformer i2 o m a -> CoTransformer i1 o m a
 ```
 
 Transform a `CoTransformer` on the left.
@@ -204,7 +204,7 @@ Transform a `CoTransformer` on the left.
 #### `transformCoTransformR`
 
 ``` purescript
-transformCoTransformR :: forall i o1 o2 m a. (MonadRec m, MonadPar m) => CoTransformer i o1 m a -> Transformer o1 o2 m a -> CoTransformer i o2 m a
+transformCoTransformR :: forall i o1 o2 f m a. (MonadRec m, MonadPar f m) => CoTransformer i o1 m a -> Transformer o1 o2 m a -> CoTransformer i o2 m a
 ```
 
 Transform a `CoTransformer` on the right.
@@ -212,7 +212,7 @@ Transform a `CoTransformer` on the right.
 #### `fuseCoTransform`
 
 ``` purescript
-fuseCoTransform :: forall i o m a. (MonadRec m, MonadPar m) => Transformer i o m a -> CoTransformer o i m a -> Process m a
+fuseCoTransform :: forall i o f m a. (MonadRec m, MonadPar f m) => Transformer i o m a -> CoTransformer o i m a -> Process m a
 ```
 
 Fuse a transformer and a cotransformer.
@@ -220,7 +220,7 @@ Fuse a transformer and a cotransformer.
 #### `connect`
 
 ``` purescript
-connect :: forall o m a. (MonadRec m, MonadPar m) => Producer o m a -> Consumer o m a -> Process m a
+connect :: forall o f m a. (MonadRec m, MonadPar f m) => Producer o m a -> Consumer o m a -> Process m a
 ```
 
 Connect a producer and a consumer.
@@ -234,7 +234,7 @@ infixr 2 connect as $$
 #### `transformProducer`
 
 ``` purescript
-transformProducer :: forall i o m a. (MonadRec m, MonadPar m) => Producer i m a -> Transformer i o m a -> Producer o m a
+transformProducer :: forall i o f m a. (MonadRec m, MonadPar f m) => Producer i m a -> Transformer i o m a -> Producer o m a
 ```
 
 Transform a producer.
@@ -248,7 +248,7 @@ infixr 2 transformProducer as $~
 #### `transformConsumer`
 
 ``` purescript
-transformConsumer :: forall i o m a. (MonadRec m, MonadPar m) => Transformer i o m a -> Consumer o m a -> Consumer i m a
+transformConsumer :: forall i o f m a. (MonadRec m, MonadPar f m) => Transformer i o m a -> Consumer o m a -> Consumer i m a
 ```
 
 Transform a consumer.
@@ -262,7 +262,7 @@ infixr 2 transformConsumer as ~$
 #### `composeTransformers`
 
 ``` purescript
-composeTransformers :: forall i j k m a. (MonadRec m, MonadPar m) => Transformer i j m a -> Transformer j k m a -> Transformer i k m a
+composeTransformers :: forall i j k f m a. (MonadRec m, MonadPar f m) => Transformer i j m a -> Transformer j k m a -> Transformer i k m a
 ```
 
 Compose transformers
@@ -276,7 +276,7 @@ infixr 2 composeTransformers as ~~
 #### `composeCoTransformers`
 
 ``` purescript
-composeCoTransformers :: forall i j k m a. (MonadRec m, MonadPar m) => CoTransformer i j m a -> CoTransformer j k m a -> CoTransformer i k m a
+composeCoTransformers :: forall i j k f m a. (MonadRec m, MonadPar f m) => CoTransformer i j m a -> CoTransformer j k m a -> CoTransformer i k m a
 ```
 
 Compose cotransformers
@@ -284,7 +284,7 @@ Compose cotransformers
 #### `joinProducers`
 
 ``` purescript
-joinProducers :: forall o1 o2 m a. (MonadRec m, MonadPar m) => Producer o1 m a -> Producer o2 m a -> Producer (Tuple o1 o2) m a
+joinProducers :: forall o1 o2 f m a. (MonadRec m, MonadPar f m) => Producer o1 m a -> Producer o2 m a -> Producer (Tuple o1 o2) m a
 ```
 
 Run two producers together.
@@ -298,7 +298,7 @@ infixr 3 joinProducers as /\
 #### `joinConsumers`
 
 ``` purescript
-joinConsumers :: forall i1 i2 m a. (MonadRec m, MonadPar m) => Consumer i1 m a -> Consumer i2 m a -> Consumer (Tuple i1 i2) m a
+joinConsumers :: forall i1 i2 f m a. (MonadRec m, MonadPar f m) => Consumer i1 m a -> Consumer i2 m a -> Consumer (Tuple i1 i2) m a
 ```
 
 Run two consumers together
