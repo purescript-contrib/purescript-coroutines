@@ -1,8 +1,5 @@
 {
   "name": "purescript-coroutines",
-  "moduleType": [
-    "node"
-  ],
   "ignore": [
     "**/.*",
     "node_modules",
@@ -17,6 +14,9 @@
   "dependencies": {
     "purescript-freet": "^2.0.0",
     "purescript-profunctor": "^2.0.0",
-    "purescript-parallel": "fundeps"
+    "purescript-parallel": "^2.0.0"
+  },
+  "devDependencies": {
+    "purescript-aff": "^2.0.0"
   }
 }
