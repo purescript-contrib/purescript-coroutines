@@ -4,15 +4,15 @@
 -- | fork, join, or any combination.
 
 module Control.Coroutine
-  ( Co()
-  , Process()
+  ( Co
+  , Process
   , loop
   , runProcess
   , fuseWith
-  , Emit(..), Producer(), emit, producer
-  , Await(..), Consumer(), await, consumer
-  , Transform(..), Transformer(), transform
-  , CoTransform(..), CoTransformer(), cotransform
+  , Emit(..), Producer, emit, producer
+  , Await(..), Consumer, await, consumer
+  , Transform(..), Transformer, transform
+  , CoTransform(..), CoTransformer, cotransform
   , connect, ($$)
   , transformProducer, ($~)
   , transformConsumer, (~$)
@@ -29,14 +29,15 @@ import Prelude
 
 import Control.Apply (lift2)
 import Control.Monad.Free.Trans (FreeT, liftFreeT, freeT, resume, runFreeT)
-import Control.Monad.Rec.Class (class MonadRec, tailRecM)
-import Control.Monad.Trans (lift)
-import Control.Parallel.Class (class MonadPar, parallel, runParallel)
+import Control.Monad.Rec.Class (class MonadRec, Step(..), tailRecM)
+import Control.Monad.Trans.Class (lift)
+import Control.Parallel (class Parallel, parallel, sequential)
+
 import Data.Bifunctor as B
 import Data.Either (Either(..))
-import Data.Functor (($>))
-import Data.Identity (Identity(..), runIdentity)
+import Data.Identity (Identity(..))
 import Data.Maybe (Maybe(..), maybe)
+import Data.Newtype (unwrap)
 import Data.Profunctor as P
 import Data.Tuple (Tuple(..))
 
@@ -49,16 +50,16 @@ type Process = Co Identity
 
 -- | Loop until the computation returns a `Just`.
 loop :: forall f m a. (Functor f, Monad m) => Co f m (Maybe a) -> Co f m a
-loop me = tailRecM (\_ -> map (maybe (Left unit) Right) me) unit
+loop me = tailRecM (\_ -> map (maybe (Loop unit) Done) me) unit
 
 -- | Run a `Process` to completion.
 runProcess :: forall m a. MonadRec m => Process m a -> m a
-runProcess = runFreeT (pure <<< runIdentity)
+runProcess = runFreeT (pure <<< unwrap)
 
 -- | Fuse two `Co`routines.
 fuseWith
-  :: forall f g h m a
-   . (Functor f, Functor g, Functor h, MonadRec m, MonadPar m)
+  :: forall f g h m a par
+   . (Functor f, Functor g, Functor h, MonadRec m, Parallel par m)
   => (forall b c d. (b -> c -> d) -> f b -> g c -> h d)
   -> Co f m a
   -> Co g m a
@@ -67,12 +68,13 @@ fuseWith zap fs gs = freeT \_ -> go (Tuple fs gs)
   where
   go :: Tuple (Co f m a) (Co g m a) -> m (Either a (h (Co h m a)))
   go (Tuple fs gs) = do
-    next <- runParallel (
-              lift2 (zap Tuple) <$> parallel (resume fs)
-                                <*> parallel (resume gs))
+    next <- sequential
+              (lift2 (zap Tuple) <$> parallel (resume fs)
+                                 <*> parallel (resume gs))
     case next of
       Left a -> pure (Left a)
       Right o -> pure (Right (map (\t -> freeT \_ -> go t) o))
+
 -- | A generating functor for emitting output values.
 data Emit o a = Emit o a
 
@@ -160,8 +162,8 @@ cotransform o = freeT \_ -> pure (Right (CoTransform o pure))
 
 -- | Transform a `CoTransformer` on the left.
 transformCoTransformL
-  :: forall i1 i2 o m a
-   . (MonadRec m, MonadPar m)
+  :: forall i1 i2 o f m a
+   . (MonadRec m, Parallel f m)
   => Transformer i1 i2 m a
   -> CoTransformer i2 o m a
   -> CoTransformer i1 o m a
@@ -172,8 +174,8 @@ transformCoTransformL = fuseWith \f (Transform t) (CoTransform o c) ->
 
 -- | Transform a `CoTransformer` on the right.
 transformCoTransformR
-  :: forall i o1 o2 m a
-   . (MonadRec m, MonadPar m)
+  :: forall i o1 o2 f m a
+   . (MonadRec m, Parallel f m)
   => CoTransformer i o1 m a
   -> Transformer o1 o2 m a
   -> CoTransformer i o2 m a
@@ -182,46 +184,46 @@ transformCoTransformR = fuseWith \f (CoTransform o1 c) (Transform t) ->
     Tuple o2 a -> CoTransform o2 ((_ `f` a) <<< c)
 
 -- | Fuse a transformer and a cotransformer.
-fuseCoTransform :: forall i o m a. (MonadRec m, MonadPar m) => Transformer i o m a -> CoTransformer o i m a -> Process m a
+fuseCoTransform :: forall i o f m a. (MonadRec m, Parallel f m) => Transformer i o m a -> CoTransformer o i m a -> Process m a
 fuseCoTransform = fuseWith \f (Transform t) (CoTransform i c) -> Identity (case t i of Tuple o a -> f a (c o))
 
 -- | Connect a producer and a consumer.
-connect :: forall o m a. (MonadRec m, MonadPar m) => Producer o m a -> Consumer o m a -> Process m a
+connect :: forall o f m a. (MonadRec m, Parallel f m) => Producer o m a -> Consumer o m a -> Process m a
 connect = fuseWith \f (Emit e a) (Await c) -> Identity (f a (c e))
 
 infixr 2 connect as $$
 
 -- | Transform a producer.
-transformProducer :: forall i o m a. (MonadRec m, MonadPar m) => Producer i m a -> Transformer i o m a -> Producer o m a
+transformProducer :: forall i o f m a. (MonadRec m, Parallel f m) => Producer i m a -> Transformer i o m a -> Producer o m a
 transformProducer = fuseWith \f (Emit i a) (Transform t) -> case t i of Tuple o b -> Emit o (f a b)
 
 infixr 2 transformProducer as $~
 
 -- | Transform a consumer.
-transformConsumer :: forall i o m a. (MonadRec m, MonadPar m) => Transformer i o m a -> Consumer o m a -> Consumer i m a
+transformConsumer :: forall i o f m a. (MonadRec m, Parallel f m) => Transformer i o m a -> Consumer o m a -> Consumer i m a
 transformConsumer = fuseWith \f (Transform t) (Await g) -> Await \i -> case t i of Tuple o a -> f a (g o)
 
 infixr 2 transformConsumer as ~$
 
 -- | Compose transformers
-composeTransformers :: forall i j k m a. (MonadRec m, MonadPar m) => Transformer i j m a -> Transformer j k m a -> Transformer i k m a
+composeTransformers :: forall i j k f m a. (MonadRec m, Parallel f m) => Transformer i j m a -> Transformer j k m a -> Transformer i k m a
 composeTransformers = fuseWith \f (Transform g) (Transform h) -> Transform \i -> case g i of Tuple j a -> case h j of Tuple k b -> Tuple k (f a b)
 
 infixr 2 composeTransformers as ~~
 
 -- | Compose cotransformers
-composeCoTransformers :: forall i j k m a. (MonadRec m, MonadPar m) => CoTransformer i j m a -> CoTransformer j k m a -> CoTransformer i k m a
+composeCoTransformers :: forall i j k f m a. (MonadRec m, Parallel f m) => CoTransformer i j m a -> CoTransformer j k m a -> CoTransformer i k m a
 composeCoTransformers = fuseWith \f (CoTransform j g) (CoTransform k h) ->
   CoTransform k (\i -> f (g i) (h j))
 
 -- | Run two producers together.
-joinProducers :: forall o1 o2 m a. (MonadRec m, MonadPar m) => Producer o1 m a -> Producer o2 m a -> Producer (Tuple o1 o2) m a
+joinProducers :: forall o1 o2 f m a. (MonadRec m, Parallel f m) => Producer o1 m a -> Producer o2 m a -> Producer (Tuple o1 o2) m a
 joinProducers = fuseWith \f (Emit o1 a) (Emit o2 b) -> Emit (Tuple o1 o2) (f a b)
 
 infixr 3 joinProducers as /\
 
 -- | Run two consumers together
-joinConsumers :: forall i1 i2 m a. (MonadRec m, MonadPar m) => Consumer i1 m a -> Consumer i2 m a -> Consumer (Tuple i1 i2) m a
+joinConsumers :: forall i1 i2 f m a. (MonadRec m, Parallel f m) => Consumer i1 m a -> Consumer i2 m a -> Consumer (Tuple i1 i2) m a
 joinConsumers = fuseWith \f (Await k1) (Await k2) -> Await \(Tuple i1 i2) -> f (k1 i1) (k2 i2)
 
 infixr 3 joinConsumers as \/
