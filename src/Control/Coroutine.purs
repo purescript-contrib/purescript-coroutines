@@ -93,7 +93,7 @@ emit o = liftFreeT (Emit o unit)
 
 -- | Create a `Producer` by providing a monadic function that produces values.
 -- |
--- | The function should pure a value of type `r` at most once, when the
+-- | The function should return a value of type `r` at most once, when the
 -- | `Producer` is ready to close.
 producer :: forall o m r. Monad m => m (Either o r) -> Producer o m r
 producer recv = loop do
@@ -120,7 +120,7 @@ await = liftFreeT (Await id)
 
 -- | Create a `Consumer` by providing a handler function which consumes values.
 -- |
--- | The handler function should pure a value of type `r` at most once, when the
+-- | The handler function should return a value of type `r` at most once, when the
 -- | `Consumer` is ready to close.
 consumer :: forall i m r. Monad m => (i -> m (Maybe r)) -> Consumer i m r
 consumer send = loop do
