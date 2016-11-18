@@ -9,11 +9,12 @@ module Control.Coroutine
   , loop
   , runProcess
   , fuseWith
+  , fuseWithL
   , Emit(..), Producer, emit, producer
   , Await(..), Consumer, await, consumer
   , Transform(..), Transformer, transform
   , CoTransform(..), CoTransformer, cotransform
-  , connect, ($$)
+  , connect, ($$), pullFrom
   , transformProducer, ($~)
   , transformConsumer, (~$)
   , composeTransformers, (~~)
@@ -31,6 +32,7 @@ import Control.Apply (lift2)
 import Control.Monad.Free.Trans (FreeT, liftFreeT, freeT, resume, runFreeT)
 import Control.Monad.Rec.Class (class MonadRec, Step(..), tailRecM)
 import Control.Monad.Trans.Class (lift)
+import Control.Monad.Except (ExceptT(..), runExceptT)
 import Control.Parallel (class Parallel, parallel, sequential)
 
 import Data.Bifunctor as B
@@ -74,6 +76,22 @@ fuseWith zap fs gs = freeT \_ -> go (Tuple fs gs)
     case next of
       Left a -> pure (Left a)
       Right o -> pure (Right (map (\t -> freeT \_ -> go t) o))
+
+-- | Fuse two `Co`routines with a bias to the left.
+fuseWithL
+  :: forall f g h m a
+   . (Functor f, Functor g, Functor h, MonadRec m)
+  => (forall b c d. (b -> c -> d) -> f b -> g c -> h d)
+  -> Co f m a
+  -> Co g m a
+  -> Co h m a
+fuseWithL zap fs gs = freeT \_ -> go (Tuple fs gs)
+  where
+  go :: Tuple (Co f m a) (Co g m a) -> m (Either a (h (Co h m a)))
+  go (Tuple fs' gs') = runExceptT do
+    l <- ExceptT $ resume fs'
+    r <- ExceptT $ resume gs'
+    pure (map (\t -> freeT \_ -> go t) (zap Tuple l r))
 
 -- | A generating functor for emitting output values.
 data Emit o a = Emit o a
@@ -192,6 +210,11 @@ connect :: forall o f m a. (MonadRec m, Parallel f m) => Producer o m a -> Consu
 connect = fuseWith \f (Emit e a) (Await c) -> Identity (f a (c e))
 
 infixr 2 connect as $$
+
+-- | Connect a producer and a consumer so that the consumer pulls from the
+-- | producer. This means the process ends immediately when the consumer closes.
+pullFrom :: forall o m a. MonadRec m => Consumer o m a -> Producer o m a -> Process m a
+pullFrom = fuseWithL \f (Await c) (Emit e a) -> pure (f (c e) a)
 
 -- | Transform a producer.
 transformProducer :: forall i o f m a. (MonadRec m, Parallel f m) => Producer i m a -> Transformer i o m a -> Producer o m a
