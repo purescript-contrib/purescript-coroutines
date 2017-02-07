@@ -21,7 +21,7 @@ and built using Pulp:
 
 The basic building block is the coroutine type `Co`, which exhibits different behavior when it suspends based on a functor `f`:
 
-- When `f` is the `Emit o` functror, the coroutine emits an output of type `o`
+- When `f` is the `Emit o` functor, the coroutine emits an output of type `o`
 - When `f` is the `Await i` functor, the coroutine waits for an input of type `i`
 - When `f` is the `Transform i o` functor, the coroutine waits for an input of type `i`, and emits an output of type `o`
 
@@ -43,7 +43,7 @@ nats = go 0
 Here is a coroutine which accepts and prints strings:    
 
 ```purescript
-printer :: forall a. Consumer String (Eff _) Unit
+printer :: forall a. Consumer String (Aff _) Unit
 printer = forever do
   s <- await
   lift (log s)
@@ -59,5 +59,5 @@ showing = forever (transform show)
 These coroutines can be combined using a handful of operators, and run using `runFreeT` or `runProcess`:
 
 ```purescript
-main = runProcess (nats $~ showing $$ printer)
+main = launchAff $ runProcess ((nats $~ showing) $$ printer)
 ```
