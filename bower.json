@@ -12,11 +12,8 @@
     "url": "git://github.com/paf31/purescript-coroutines.git"
   },
   "dependencies": {
-    "purescript-freet": "^2.0.0",
-    "purescript-profunctor": "^2.0.0",
-    "purescript-parallel": "^2.0.0"
-  },
-  "devDependencies": {
-    "purescript-aff": "^2.0.0"
+    "purescript-freet": "^3.0.0",
+    "purescript-profunctor": "^3.0.0",
+    "purescript-parallel": "^3.0.0"
   }
 }
