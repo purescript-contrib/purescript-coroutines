@@ -15,5 +15,8 @@
     "purescript-freet": "^3.0.0",
     "purescript-profunctor": "^3.0.0",
     "purescript-parallel": "^3.0.0"
+  },
+  "devDependencies": {
+    "purescript-aff": "^3.0.0"
   }
 }
