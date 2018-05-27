@@ -34,7 +34,6 @@ import Control.Monad.Rec.Class (class MonadRec, Step(..), tailRecM)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Except (ExceptT(..), runExceptT)
 import Control.Parallel (class Parallel, parallel, sequential)
-
 import Data.Bifunctor as B
 import Data.Either (Either(..))
 import Data.Identity (Identity(..))
@@ -141,7 +140,7 @@ type Consumer i = Co (Await i)
 
 -- | Await an input value.
 await :: forall m i. Monad m => Consumer i m i
-await = liftFreeT (Await id)
+await = liftFreeT (Await identity)
 
 -- | Create a `Consumer` by providing a handler function which consumes values.
 -- |

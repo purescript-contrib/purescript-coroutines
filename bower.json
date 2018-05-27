@@ -9,14 +9,15 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git://github.com/paf31/purescript-coroutines.git"
+    "url": "git://github.com/purescript-contrib/purescript-coroutines.git"
   },
   "dependencies": {
-    "purescript-freet": "^3.0.0",
-    "purescript-profunctor": "^3.0.0",
-    "purescript-parallel": "^3.0.0"
+    "purescript-freet": "^4.0.0",
+    "purescript-profunctor": "^4.0.0",
+    "purescript-parallel": "^4.0.0"
   },
   "devDependencies": {
-    "purescript-aff": "^3.0.0"
+    "purescript-aff": "^5.0.0",
+    "purescript-console": "^4.1.0"
   }
 }
