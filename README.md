@@ -2,7 +2,7 @@
 
 [![Latest release](http://img.shields.io/github/release/purescript-contrib/purescript-coroutines.svg)](https://github.com/purescript-contrib/purescript-coroutines/releases)
 [![Build Status](https://travis-ci.org/purescript-contrib/purescript-coroutines.svg?branch=master)](https://travis-ci.org/purescript-contrib/purescript-coroutines)
-[![Maintainer: paf31](https://img.shields.io/badge/maintainer-paf31-lightgrey.svg)](http://github.com/paf31)
+[![Maintainer: natefaubion](https://img.shields.io/badge/maintainer-natefaubion-lightgrey.svg)](http://github.com/natefaubion)
 [![Pursuit](http://pursuit.purescript.org/packages/purescript-coroutines/badge)](http://pursuit.purescript.org/packages/purescript-coroutines/)
 
 - [Module Documentation](http://pursuit.purescript.org/packages/purescript-coroutines/)
