@@ -1,9 +1,9 @@
 # purescript-coroutines
 
 [![Latest release](http://img.shields.io/github/release/purescript-contrib/purescript-coroutines.svg)](https://github.com/purescript-contrib/purescript-coroutines/releases)
-[![Build Status](https://travis-ci.org/purescript-contrib/purescript-coroutines.svg?branch=master)](https://travis-ci.org/purescript-contrib/purescript-coroutines)
-[![Maintainer: natefaubion](https://img.shields.io/badge/maintainer-natefaubion-lightgrey.svg)](http://github.com/natefaubion)
+[![Build status](https://travis-ci.org/purescript-contrib/purescript-coroutines.svg?branch=master)](https://travis-ci.org/purescript-contrib/purescript-coroutines)
 [![Pursuit](http://pursuit.purescript.org/packages/purescript-coroutines/badge)](http://pursuit.purescript.org/packages/purescript-coroutines/)
+[![Maintainer: natefaubion](https://img.shields.io/badge/maintainer-natefaubion-lightgrey.svg)](http://github.com/natefaubion)
 
 - [Module Documentation](http://pursuit.purescript.org/packages/purescript-coroutines/)
 - [Example](test/Main.purs)
@@ -40,7 +40,7 @@ nats = go 0
     go (i + 1)
 ```
 
-Here is a coroutine which accepts and prints strings:    
+Here is a coroutine which accepts and prints strings:
 
 ```purescript
 printer :: forall a. Consumer String (Aff _) Unit
@@ -61,3 +61,7 @@ These coroutines can be combined using a handful of operators, and run using `ru
 ```purescript
 main = launchAff $ runProcess ((nats $~ showing) $$ printer)
 ```
+
+## Contributing
+
+Read the [contribution guidelines](https://github.com/purescript-contrib/purescript-coroutines/blob/master/.github/contributing.md) to get started and see helpful related resources.
