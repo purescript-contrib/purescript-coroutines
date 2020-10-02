@@ -141,7 +141,7 @@ type Consumer i = Co (Await i)
 
 -- | Await an input value.
 await :: forall m i. Monad m => Consumer i m i
-await = liftFreeT (Await id)
+await = liftFreeT (Await identity)
 
 -- | Create a `Consumer` by providing a handler function which consumes values.
 -- |

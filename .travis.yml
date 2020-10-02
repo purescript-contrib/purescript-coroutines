@@ -3,13 +3,10 @@ dist: trusty
 sudo: required
 node_js: 6
 install:
-  - npm install -g bower
-  - npm install
-  - bower install --production
+  - yarn install
+  - spago install
 script:
-  - npm run -s build
-  - bower install
-  - npm run -s test
+  - npm run build
 after_success:
 - >-
   test $TRAVIS_TAG &&
