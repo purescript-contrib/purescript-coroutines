@@ -1,14 +1,16 @@
-# purescript-coroutines
+# Coroutines
 
-[![Latest release](http://img.shields.io/github/release/purescript-contrib/purescript-coroutines.svg)](https://github.com/purescript-contrib/purescript-coroutines/releases)
-[![Build status](https://travis-ci.org/purescript-contrib/purescript-coroutines.svg?branch=master)](https://travis-ci.org/purescript-contrib/purescript-coroutines)
-[![Pursuit](http://pursuit.purescript.org/packages/purescript-coroutines/badge)](http://pursuit.purescript.org/packages/purescript-coroutines/)
+[![CI](https://github.com/purescript-contrib/purescript-coroutines/workflows/CI/badge.svg?branch=main)](https://github.com/purescript-contrib/purescript-coroutines/actions?query=workflow%3ACI+branch%3Amain)
+[![Release](https://img.shields.io/github/release/purescript-contrib/purescript-coroutines.svg)](https://github.com/purescript-contrib/purescript-coroutines/releases)
+[![Pursuit](https://pursuit.purescript.org/packages/purescript-coroutines/badge)](https://pursuit.purescript.org/packages/purescript-coroutines)
+[![Maintainer: garyb](https://img.shields.io/badge/maintainer-garyb-teal.svg)](https://github.com/garyb)
+[![Maintainer: thomashoneyman](https://img.shields.io/badge/maintainer-thomashoneyman-teal.svg)](https://github.com/thomashoneyman)
 
 Coroutines are a general control structure allowing flow control to pass cooperatively between two different routines. Coroutines in this library are computations which can suspend their execution and return control to their invoker, which can resume the computation. Coroutines can be used to implement pipelines as described in [Coroutine Pipelines by Mario Blažević](https://themonadreader.files.wordpress.com/2011/10/issue19.pdf).
 
 If you are creating asynchronous or concurrent pipelines you may be interested in:
 
-- [aff-coroutines](https://github.com/purescript-contrib/purescript-aff-coroutines).
+- [aff-coroutines](https://github.com/purescript-contrib/purescript-aff-coroutines)
 
 If you need a featureful streaming library, you may also be interested in:
 
@@ -22,21 +24,13 @@ If you are looking for a FRP library, then you may be interested in:
 
 ## Installation
 
-This library can be installed with Spago:
+Install `coroutines` with [Spago](https://github.com/purescript/spago):
 
-```purs
+```sh
 spago install coroutines
 ```
 
-## Documentation
-
-This README contains a brief overview of the concepts in this library. For a richer review of this library, please see other documentation resources:
-
-- [Library Documentation](./docs)
-- [Module Documentation](http://pursuit.purescript.org/packages/purescript-coroutines)
-- [Test Examples](./test/Main.purs)
-
-### Quick Start
+## Quick start
 
 This quick start briefly introduces the basics of `coroutines`. For a more thorough, beginner-friendly introduction to the library, please see the [library documentation](./docs).
 
@@ -121,6 +115,25 @@ main = launchAff $ runProcess ((nats $~ showing) $$ printer)
 
 The producer will emit a value, then yield; this value will satisfy the `await` call in the consumer, which will use the value and then yield back to the producer. This process will continue indefinitely.
 
+## Documentation
+
+`coroutines` documentation is stored in a few places:
+
+1. Module documentation is [published on Pursuit](https://pursuit.purescript.org/packages/purescript-coroutines).
+2. Written documentation is kept in the [docs directory](./docs).
+3. Usage examples can be found in [the test suite](./test).
+
+If you get stuck, there are several ways to get help:
+
+- [Open an issue](https://github.com/purescript-contrib/purescript-coroutines/issues) if you have encountered a bug or problem.
+- [Search or start a thread on the PureScript Discourse](https://discourse.purescript.org) if you have general questions. You can also ask questions in the `#purescript` and `#purescript-beginners` channels on the [Functional Programming Slack](https://functionalprogramming.slack.com) ([invite link](https://fpchat-invite.herokuapp.com/)).
+
 ## Contributing
 
-Read the [contribution guidelines](https://github.com/purescript-contrib/purescript-coroutines/blob/master/.github/contributing.md) to get started and see helpful related resources.
+You can contribute to `coroutines` in several ways:
+
+1. If you encounter a problem or have a question, please [open an issue](https://github.com/purescript-contrib/purescript-coroutines/issues). We'll do our best to work with you to resolve or answer it.
+
+2. If you would like to contribute code, tests, or documentation, please [read the contributor guide](./CONTRIBUTING.md). It's a short, helpful introduction to contributing to this library, including development instructions.
+
+3. If you have written a library, tutorial, guide, or other resource based on this package, please share it on the [PureScript Discourse](https://discourse.purescript.org)! Writing libraries and learning resources are a great way to help this library succeed.

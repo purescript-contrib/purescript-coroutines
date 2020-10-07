@@ -1,8 +1,10 @@
 # Coroutines Documentation
 
-This library modules computations which can suspend, yielding control and the ability to resume themselves to their invoker. Among other things, this helps you create pipelines as described in [Coroutine Pipelines](https://themonadreader.files.wordpress.com/2011/10/issue19.pdf) in the Monad Reader, Issue 19.
+This directory contains documentation for `coroutines`. If you are interested in contributing new documentation, please read the [contributor guidelines](../CONTRIBUTING.md) and [What Nobody Tells You About Documentation](https://documentation.divio.com) for help getting started.
 
-## An Overview
+## Library Summary
+
+This library models computations which can suspend, yielding control and the ability to resume themselves to their invoker. Among other things, this helps you create pipelines as described in [Coroutine Pipelines](https://themonadreader.files.wordpress.com/2011/10/issue19.pdf) in the Monad Reader, Issue 19.
 
 In its simplest version, coroutine pipelines model data pipelines in a declarative rather than imperative way. Using them, one can write:
 
@@ -20,7 +22,7 @@ Finally, you can think of pipelines similar to using `>>>` to compose multiple f
 
 To model this pipelines, coroutines provides 4 concepts: Producers, Consumers, Transformers, and Cotransformers.
 
-## The Basic Concepts
+## Basic Concepts
 
 Producers represent a way to produce some initial data. For example, an apple tree produces apples. An HTML tag "produces" click events. A paper tray in a printer _can_ provide paper when someone needs to print something. Producers don't know or care what happens to the things they produce; they simply produce it.
 
