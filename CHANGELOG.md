@@ -5,12 +5,16 @@ Notable changes to this project are documented in this file. The format is based
 ## [Unreleased]
 
 Breaking changes (😱!!!):
+- Added support for PureScript 0.14 and dropped support for all previous versions (#34)
 
 New features:
 
 Bugfixes:
 
 Other improvements:
+- Added an in-depth library explanation to the docs folder (#31)
+- Changed default branch to `main` from `master`
+- Updated to comply with Contributors library guidelines by adding new issue and pull request templates, updating documentation, and migrating to Spago for local development and CI (#33)
 
 ## [v5.0.1](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v5.0.1) - 2019-08-27
 
@@ -34,60 +38,60 @@ Other improvements:
 
 ## [v2.0.0](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v2.0.0) - 2016-07-17
 
-- Use `MonadPar` to step fused coroutines in parallel.
+- Now uses `MonadPar` to step fused coroutines in parallel.
 
 ## [v1.3.0](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v1.3.0) - 2016-06-18
 
-- Add `composeCoTransformers`
+- Added `composeCoTransformers`
 
 ## [v1.2.0](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v1.2.0) - 2016-06-18
 
-- Add `transformCoTransformL` and `transformCoTransformR`
+- Added `transformCoTransformL` and `transformCoTransformR`
 
 ## [v1.1.0](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v1.1.0) - 2016-06-18
 
-- Add `CoTransformer`
+- Added `CoTransformer`
 
 ## [v1.0.0](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v1.0.0) - 2016-06-05
 
-- Updates for 1.0 core libraries
+- Updated for 1.0 core libraries
 
 ## [v0.5.0](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v0.5.0) - 2015-09-22
 
-- Bump dependencies, fix warnings (@garyb)
+- Bumped dependencies, fixed warnings (@garyb)
 
 ## [v0.4.0](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v0.4.0) - 2015-08-26
 
-- Update `transformers` dependency. This release requires compiler versions >= 0.7.4.
+- Updated `transformers` dependency. This release requires compiler versions >= 0.7.4.
 
 ## [v0.3.1](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v0.3.1) - 2015-08-07
 
-- Fork and join operators.
+- Added fork and join operators.
 
 ## [v0.3.0](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v0.3.0) - 2015-08-07
 
-- Use `purescript-freet`.
+- Now depends on `purescript-freet`.
 
 ## [v0.2.4](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v0.2.4) - 2015-08-07
 
-- Instances (@garyb)
-- Run consumer effects before producer (@garyb)
+- Added instances (@garyb)
+- Updated to run consumer effects before producer (@garyb)
 
 ## [v0.2.3](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v0.2.3) - 2015-08-06
 
- -Add `bimapCo` and `interpret` (@garyb)
+- Added `bimapCo` and `interpret` (@garyb)
 
 ## [v0.2.2](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v0.2.2) - 2015-08-02
 
-- Add `producer` and `consumer` functions.
+- Added `producer` and `consumer` functions.
 
 ## [v0.2.1](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v0.2.1) - 2015-07-31
 
-- Slight API changes.
+- Made slight API changes.
 
 ## [v0.2.0](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v0.2.0) - 2015-07-31
 
-- Add more composition operators.
+- Added more composition operators.
 
 ## [v0.1.0](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v0.1.0) - 2015-07-29
 
