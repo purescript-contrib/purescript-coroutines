@@ -91,7 +91,8 @@ fuseWith zap fs gs = freeT \_ -> go (Tuple fs gs)
   go :: Tuple (Co f m a) (Co g m a) -> m (Either a (h (Co h m a)))
   go (Tuple fs' gs') = do
     next <- sequential
-      ( lift2 (zap Tuple) <$> parallel (resume fs')
+      ( lift2 (zap Tuple)
+          <$> parallel (resume fs')
           <*> parallel (resume gs')
       )
     case next of
