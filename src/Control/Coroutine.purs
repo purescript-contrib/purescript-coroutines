@@ -10,20 +10,37 @@ module Control.Coroutine
   , runProcess
   , fuseWith
   , fuseWithL
-  , Emit(..), Producer, emit, producer
-  , Await(..), Consumer, await, consumer
-  , Transform(..), Transformer, transform
-  , CoTransform(..), CoTransformer, cotransform
-  , connect, ($$), pullFrom
-  , transformProducer, ($~)
-  , transformConsumer, (~$)
-  , composeTransformers, (~~)
+  , Emit(..)
+  , Producer
+  , emit
+  , producer
+  , Await(..)
+  , Consumer
+  , await
+  , consumer
+  , Transform(..)
+  , Transformer
+  , transform
+  , CoTransform(..)
+  , CoTransformer
+  , cotransform
+  , connect
+  , ($$)
+  , pullFrom
+  , transformProducer
+  , ($~)
+  , transformConsumer
+  , (~$)
+  , composeTransformers
+  , (~~)
   , composeCoTransformers
   , fuseCoTransform
   , transformCoTransformL
   , transformCoTransformR
-  , joinProducers, (/\)
-  , joinConsumers, (\/)
+  , joinProducers
+  , (/\)
+  , joinConsumers
+  , (\/)
   ) where
 
 import Prelude
@@ -74,8 +91,9 @@ fuseWith zap fs gs = freeT \_ -> go (Tuple fs gs)
   go :: Tuple (Co f m a) (Co g m a) -> m (Either a (h (Co h m a)))
   go (Tuple fs' gs') = do
     next <- sequential
-              (lift2 (zap Tuple) <$> parallel (resume fs')
-                                 <*> parallel (resume gs'))
+      ( lift2 (zap Tuple) <$> parallel (resume fs')
+          <*> parallel (resume gs')
+      )
     case next of
       Left a -> pure (Left a)
       Right o -> pure (Right (map (\t -> freeT \_ -> go t) o))
