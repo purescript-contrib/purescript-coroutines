@@ -4,7 +4,6 @@
 [![Release](https://img.shields.io/github/release/purescript-contrib/purescript-coroutines.svg)](https://github.com/purescript-contrib/purescript-coroutines/releases)
 [![Pursuit](https://pursuit.purescript.org/packages/purescript-coroutines/badge)](https://pursuit.purescript.org/packages/purescript-coroutines)
 [![Maintainer: garyb](https://img.shields.io/badge/maintainer-garyb-teal.svg)](https://github.com/garyb)
-[![Maintainer: thomashoneyman](https://img.shields.io/badge/maintainer-thomashoneyman-teal.svg)](https://github.com/thomashoneyman)
 
 Coroutines are a general control structure allowing flow control to pass cooperatively between two different routines. Coroutines in this library are computations which can suspend their execution and return control to their invoker, which can resume the computation. Coroutines can be used to implement pipelines as described in [Coroutine Pipelines by Mario Blažević](https://themonadreader.files.wordpress.com/2011/10/issue19.pdf).
 
