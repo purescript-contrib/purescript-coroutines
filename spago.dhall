@@ -12,7 +12,6 @@
   , "parallel"
   , "prelude"
   , "profunctor"
-  , "psci-support"
   , "tailrec"
   , "transformers"
   , "tuples"
