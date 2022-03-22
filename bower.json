@@ -12,13 +12,13 @@
     "url": "https://github.com/purescript-contrib/purescript-coroutines.git"
   },
   "dependencies": {
-    "purescript-freet": "^6.0.0",
-    "purescript-parallel": "^5.0.0",
-    "purescript-profunctor": "^5.0.0"
+    "purescript-freet": "main",
+    "purescript-parallel": "master",
+    "purescript-profunctor": "master"
   },
   "devDependencies": {
-    "purescript-aff": "^6.0.0",
-    "purescript-console": "^5.0.0",
-    "purescript-effect": "^3.0.0"
+    "purescript-aff": "main",
+    "purescript-console": "master",
+    "purescript-effect": "master"
   }
 }
