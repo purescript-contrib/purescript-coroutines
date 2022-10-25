@@ -14,6 +14,7 @@ module Control.Coroutine
   , Producer
   , emit
   , producer
+  , unfoldrProducer
   , Await(..)
   , Consumer
   , await
@@ -21,6 +22,7 @@ module Control.Coroutine
   , Transform(..)
   , Transformer
   , transform
+  , transformWithState
   , CoTransform(..)
   , CoTransformer
   , cotransform
@@ -46,10 +48,10 @@ module Control.Coroutine
 import Prelude
 
 import Control.Apply (lift2)
+import Control.Monad.Except (ExceptT(..), runExceptT)
 import Control.Monad.Free.Trans (FreeT, liftFreeT, freeT, resume, runFreeT)
 import Control.Monad.Rec.Class (class MonadRec, Step(..), tailRecM)
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.Except (ExceptT(..), runExceptT)
 import Control.Parallel (class Parallel, parallel, sequential)
 import Data.Bifunctor as B
 import Data.Either (Either(..))
@@ -145,6 +147,20 @@ producer recv = loop do
     Left o -> emit o $> Nothing
     Right r -> pure (Just r)
 
+-- | Create a `Producer` by providing a pure function that generates next output
+-- |
+-- | This could have been an instance of the `Unfoldable` type class:
+-- | `unfoldr :: forall a b. (b -> Maybe (Tuple a b)) -> b -> t a`
+unfoldrProducer
+  :: forall a s m
+   . Applicative m
+  => (s -> Maybe (Tuple a s))
+  -> s
+  -> Producer a m Unit
+unfoldrProducer step state = freeT \_ -> pure case step state of
+  Nothing -> Left unit
+  Just (Tuple a nextState) -> Right $ Emit a $ unfoldrProducer step nextState
+
 -- | A generating functor for awaiting input values.
 newtype Await i a = Await (i -> a)
 
@@ -185,6 +201,18 @@ type Transformer i o = Co (Transform i o)
 -- | Transform input values.
 transform :: forall m i o. Monad m => (i -> o) -> Transformer i o m Unit
 transform f = liftFreeT (Transform \i -> Tuple (f i) unit)
+
+-- | Transform inputs to outputs passing some state `s` between transformations.
+transformWithState
+  :: forall m i o s
+   . Monad m
+  => s
+  -> (s -> i -> Tuple s o)
+  -> Transformer i o m Unit
+transformWithState state step = freeT \_ ->
+  pure $ Right $ Transform \i ->
+    case step state i of
+      Tuple nextState o -> Tuple o (transformWithState nextState step)
 
 -- | A generating functor which yields a value before waiting for an input.
 data CoTransform i o a = CoTransform o (i -> a)
