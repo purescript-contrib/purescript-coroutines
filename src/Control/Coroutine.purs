@@ -15,6 +15,8 @@ module Control.Coroutine
   , emit
   , producer
   , unfoldrProducer
+  , foldrProducer
+  , foldlProducer
   , Await(..)
   , Consumer
   , await
@@ -47,7 +49,7 @@ module Control.Coroutine
 
 import Prelude
 
-import Control.Apply (lift2)
+import Control.Apply (applySecond, lift2)
 import Control.Monad.Except (ExceptT(..), runExceptT)
 import Control.Monad.Free.Trans (FreeT, liftFreeT, freeT, resume, runFreeT)
 import Control.Monad.Rec.Class (class MonadRec, Step(..), tailRecM)
@@ -55,6 +57,7 @@ import Control.Monad.Trans.Class (lift)
 import Control.Parallel (class Parallel, parallel, sequential)
 import Data.Bifunctor as B
 import Data.Either (Either(..))
+import Data.Foldable (class Foldable, foldl, foldr)
 import Data.Identity (Identity(..))
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (unwrap)
@@ -160,6 +163,14 @@ unfoldrProducer
 unfoldrProducer step state = freeT \_ -> pure case step state of
   Nothing -> Left unit
   Just (Tuple a nextState) -> Right $ Emit a $ unfoldrProducer step nextState
+
+-- | Create a `Producer` that takes its values from right-folding a foldable.
+foldrProducer :: forall f a m. Monad m => Foldable f => f a -> Producer a m Unit
+foldrProducer = foldr (applySecond <<< emit) (pure unit)
+
+-- | Create a `Producer` that takes its values from left-folding a foldable.
+foldlProducer :: forall f a m. Monad m => Foldable f => f a -> Producer a m Unit
+foldlProducer = foldl (flip (applySecond <<< emit)) (pure unit)
 
 -- | A generating functor for awaiting input values.
 newtype Await i a = Await (i -> a)

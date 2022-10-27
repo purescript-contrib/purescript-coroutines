@@ -8,8 +8,10 @@ Breaking changes:
 
 New features:
 
-- Function `unfoldrProducer` constructs a `Producer` like `Unfoldable.unfoldr` does.
-- Function `transformWithState` constructs a `Transformer` using a step function with state.
+- `unfoldrProducer` constructs a `Producer` like `Unfoldable.unfoldr` does.
+- `foldrProducer` constructs a Producer that takes its values from right-folding a `Foldable` structure.
+- `foldlProducer` constructs a Producer that takes its values from left-folding a `Foldable` structure.
+- `transformWithState` constructs a `Transformer` using a step function with state.
 
 Bugfixes:
 

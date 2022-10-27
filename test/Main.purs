@@ -3,10 +3,11 @@ module Test.Main where
 import Prelude
 
 import Control.Alternative (guard)
-import Control.Coroutine (unfoldrProducer, ($$), ($~), (/\), (~$))
+import Control.Coroutine (foldlProducer, foldrProducer, unfoldrProducer, ($$), ($~), (/\), (~$))
 import Control.Coroutine as Co
 import Control.Monad.Rec.Class (forever)
 import Control.Monad.Trans.Class (lift)
+import Data.Array ((..))
 import Data.Int (even)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (wrap)
@@ -70,3 +71,5 @@ main = void $ launchAff do
   Co.runProcess ((nats $~ showing) $$ printer)
   Co.runProcess (nats /\ nats $$ showing ~$ printer)
   Co.runProcess (collatz 39 $$ counting ~$ showingCount ~$ printer)
+  Co.runProcess (foldrProducer (1 .. 3) $$ showing ~$ printer) -- 1, 2, 3
+  Co.runProcess (foldlProducer (1 .. 3) $$ showing ~$ printer) -- 3, 2, 1
