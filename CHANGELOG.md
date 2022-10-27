@@ -8,6 +8,11 @@ Breaking changes:
 
 New features:
 
+- `unfoldrProducer` constructs a `Producer` like `Unfoldable.unfoldr` does.
+- `foldrProducer` constructs a Producer that takes its values from right-folding a `Foldable` structure.
+- `foldlProducer` constructs a Producer that takes its values from left-folding a `Foldable` structure.
+- `transformWithState` constructs a `Transformer` using a step function with state.
+
 Bugfixes:
 
 Other improvements:
@@ -15,6 +20,7 @@ Other improvements:
 ## [v7.0.0](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v7.0.0) - 2022-04-27
 
 Breaking changes:
+
 - Update project and deps to PureScript v0.15.0 (#39 by @JordanMartinez)
 
 New features:
@@ -22,11 +28,13 @@ New features:
 Bugfixes:
 
 Other improvements:
+
 - Added `purs-tidy` formatter (#38 by @thomashoneyman)
 
 ## [v6.0.0](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v6.0.0) - 2021-02-26
 
 Breaking changes:
+
 - Added support for PureScript 0.14 and dropped support for all previous versions (#34)
 
 New features:
@@ -34,6 +42,7 @@ New features:
 Bugfixes:
 
 Other improvements:
+
 - Added an in-depth library explanation to the docs folder (#31)
 - Changed default branch to `main` from `master`
 - Updated to comply with Contributors library guidelines by adding new issue and pull request templates, updating documentation, and migrating to Spago for local development and CI (#33)
