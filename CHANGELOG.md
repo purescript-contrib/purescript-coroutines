@@ -11,6 +11,10 @@ New features:
 Bugfixes:
 
 Other improvements:
+
+## [v7.0.1](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v7.0.1) - 2026-10-10
+
+Other improvements:
 - Migrate to registry-backed Spago and update CI tooling while preserving published dependency ranges.
 
 ## [v7.0.0](https://github.com/purescript-contrib/purescript-coroutines/releases/tag/v7.0.0) - 2022-04-27
